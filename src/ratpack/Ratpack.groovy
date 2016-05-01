@@ -1,5 +1,5 @@
 import io.durbs.movieratings.MovieRatingsModule
-import io.durbs.movieratings.handler.CreateAccountHandler
+import io.durbs.movieratings.handler.RegistrationHandler
 import io.durbs.movieratings.handler.LoginHandler
 import ratpack.config.ConfigData
 import ratpack.rx.RxRatpack
@@ -23,7 +23,7 @@ ratpack {
 
   handlers {
 
-    post('register', CreateAccountHandler)
+    post('register', RegistrationHandler)
     post('login', LoginHandler)
   }
 }

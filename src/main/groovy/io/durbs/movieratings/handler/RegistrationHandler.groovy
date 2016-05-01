@@ -14,7 +14,7 @@ import static ratpack.jackson.Jackson.fromJson
 
 @Singleton
 @Slf4j
-class CreateAccountHandler extends GroovyHandler {
+class RegistrationHandler extends GroovyHandler {
 
   @Inject
   AuthenticationService authenticationService

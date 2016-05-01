@@ -19,7 +19,7 @@ import groovy.util.logging.Slf4j
 import io.durbs.movieratings.codec.UserCodec
 import io.durbs.movieratings.config.MongoConfig
 import io.durbs.movieratings.config.SecurityConfig
-import io.durbs.movieratings.handler.CreateAccountHandler
+import io.durbs.movieratings.handler.RegistrationHandler
 import io.durbs.movieratings.handler.LoginHandler
 import io.durbs.movieratings.services.AuthenticationService
 import org.bson.codecs.configuration.CodecRegistries
@@ -33,7 +33,7 @@ class MovieRatingsModule extends AbstractModule {
   @Override
   protected void configure() {
 
-    bind(CreateAccountHandler)
+    bind(RegistrationHandler)
     bind(LoginHandler)
     bind(AuthenticationService)
 
