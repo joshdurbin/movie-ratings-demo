@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/joshdurbin/movie-ratings-demo.png?label=ready&title=Ready)](https://waffle.io/joshdurbin/movie-ratings-demo)
 Ratpack project template
 -----------------------------
 
