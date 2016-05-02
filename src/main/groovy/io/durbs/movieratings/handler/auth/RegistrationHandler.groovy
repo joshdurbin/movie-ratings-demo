@@ -1,4 +1,4 @@
-package io.durbs.movieratings.handler
+package io.durbs.movieratings.handler.auth
 
 import com.google.inject.Inject
 import com.google.inject.Singleton
@@ -14,7 +14,7 @@ import static ratpack.jackson.Jackson.fromJson
 
 @Singleton
 @Slf4j
-class LoginHandler extends GroovyHandler {
+class RegistrationHandler extends GroovyHandler {
 
   @Inject
   AuthenticationService authenticationService
@@ -26,9 +26,9 @@ class LoginHandler extends GroovyHandler {
       .observe()
       .flatMap({ final User user ->
 
-      authenticationService.authenticate(user.username, user.password)
+      authenticationService.createAccount(user.username, user.password, user.emailAddress)
     } as Func1)
-      .subscribe { final String jwt ->
+    .subscribe { final String jwt ->
 
       context.render(Jackson.json(jwt))
     }

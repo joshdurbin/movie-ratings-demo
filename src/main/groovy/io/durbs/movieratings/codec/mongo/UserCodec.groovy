@@ -1,4 +1,4 @@
-package io.durbs.movieratings.codec
+package io.durbs.movieratings.codec.mongo
 
 import com.mongodb.DBCollection
 import groovy.transform.CompileStatic

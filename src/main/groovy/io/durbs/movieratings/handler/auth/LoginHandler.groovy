@@ -1,8 +1,9 @@
-package io.durbs.movieratings.handler
+package io.durbs.movieratings.handler.auth
 
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import groovy.util.logging.Slf4j
+import io.durbs.movieratings.Constants
 import io.durbs.movieratings.model.User
 import io.durbs.movieratings.services.AuthenticationService
 import ratpack.groovy.handling.GroovyContext
@@ -14,7 +15,7 @@ import static ratpack.jackson.Jackson.fromJson
 
 @Singleton
 @Slf4j
-class RegistrationHandler extends GroovyHandler {
+class LoginHandler extends GroovyHandler {
 
   @Inject
   AuthenticationService authenticationService
@@ -26,11 +27,21 @@ class RegistrationHandler extends GroovyHandler {
       .observe()
       .flatMap({ final User user ->
 
-      authenticationService.createAccount(user.username, user.password, user.emailAddress)
+      authenticationService.authenticate(user.username, user.password)
     } as Func1)
-    .subscribe { final String jwt ->
+      .doOnError { final Throwable throwable ->
 
-      context.render(Jackson.json(jwt))
+      context.clientError(500)
+    }.defaultIfEmpty(Constants.PLACE_HOLDER_INVALID_JWT_TOKEN)
+      .subscribe { final String jwt ->
+
+      if (jwt != Constants.PLACE_HOLDER_INVALID_JWT_TOKEN) {
+
+        context.render(Jackson.json(jwt))
+      } else {
+
+        context.render(Jackson.json(jwt))
+      }
     }
   }
 }

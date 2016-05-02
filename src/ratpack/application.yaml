@@ -1,3 +1,6 @@
+redis:
+  uri: redis://localhost:32768
+  cacheTTLInSeconds: 3600
 mongo:
   db: movie-ratings
   uri: mongodb://localhost:32769/movie-ratings
