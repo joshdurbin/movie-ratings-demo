@@ -13,6 +13,7 @@ import groovy.util.logging.Slf4j
 import io.durbs.movieratings.codec.mongo.UserCodec
 import io.durbs.movieratings.config.SecurityConfig
 import io.durbs.movieratings.model.User
+import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import org.bson.types.ObjectId
@@ -125,8 +126,10 @@ class AuthenticationService {
         .parser()
         .setSigningKey(securityConfig.jwtSigningKey)
         .parseClaimsJws(token)
-        .body.get('jti')
-    }.observe().flatMap( { final String id ->
+        .body.get(Claims.ID)
+    }
+    .observe()
+    .flatMap( { final String id ->
 
       userRedisCommands.hget(USER_HASH_KEY, id)
         .switchIfEmpty(
