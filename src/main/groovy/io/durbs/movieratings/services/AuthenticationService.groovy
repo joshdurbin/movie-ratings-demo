@@ -10,10 +10,11 @@ import com.mongodb.rx.client.Success
 import de.qaware.heimdall.PasswordFactory
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.durbs.movieratings.Constants
 import io.durbs.movieratings.codec.mongo.UserCodec
 import io.durbs.movieratings.config.SecurityConfig
 import io.durbs.movieratings.model.User
-import io.jsonwebtoken.Claims
+import io.jsonwebtoken.Header
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import org.bson.types.ObjectId
@@ -42,6 +43,22 @@ class AuthenticationService {
   @Inject
   MongoDatabase mongoDatabase
 
+  final Func1 USER_TO_JWT = new Func1<User, String>() {
+
+    @Override
+    String call(User user) {
+
+      Jwts
+        .builder()
+        .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
+        .setIssuedAt(new Date())
+        .setExpiration(Date.from(LocalDateTime.now().plusHours(securityConfig.jwtTokenTTLInHours).toInstant(ZoneOffset.UTC)))
+        .claim(Constants.JWT_USER_OBJECT_ID_CLAIM, user.id.toString())
+        .signWith(SignatureAlgorithm.HS512, securityConfig.jwtSigningKey)
+        .compact()
+    }
+  }
+
   /**
    *
    * @param username
@@ -67,16 +84,7 @@ class AuthenticationService {
       .find(eq(UserCodec.USERNAME_PROPERTY, username))
       .toObservable()
       .switchIfEmpty(userInsertionAndQueryObservable)
-      .map({ final User retrievedUser ->
-
-        Jwts
-          .builder()
-          .setId(retrievedUser.id.toString())
-          .setIssuedAt(new Date())
-          .signWith(SignatureAlgorithm.HS512, securityConfig.jwtSigningKey)
-          .setExpiration(Date.from(LocalDateTime.now().plusHours(securityConfig.jwtTokenTTLInHours).toInstant(ZoneOffset.UTC)))
-          .compact()
-      } as Func1)
+      .map(USER_TO_JWT)
       .bindExec()
   }
 
@@ -105,16 +113,7 @@ class AuthenticationService {
             .subscribe()
         }
 
-      }.map { final User user ->
-
-        Jwts
-          .builder()
-          .setId(user.id.toString())
-          .setIssuedAt(new Date())
-          .signWith(SignatureAlgorithm.HS512, securityConfig.jwtSigningKey)
-          .setExpiration(Date.from(LocalDateTime.now().plusHours(securityConfig.jwtTokenTTLInHours).toInstant(ZoneOffset.UTC)))
-          .compact()
-      }
+      }.map(USER_TO_JWT)
       .bindExec()
   }
 
@@ -126,7 +125,7 @@ class AuthenticationService {
         .parser()
         .setSigningKey(securityConfig.jwtSigningKey)
         .parseClaimsJws(token)
-        .body.get(Claims.ID)
+        .body.get(Constants.JWT_USER_OBJECT_ID_CLAIM)
     }
     .observe()
     .flatMap( { final String id ->
