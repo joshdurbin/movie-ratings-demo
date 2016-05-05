@@ -39,11 +39,43 @@ class MovieService {
   @Inject
   RedisConfig redisConfig
 
+  private final Func1 MOVIE_TO_RATED_MOVIE = { final Movie movie ->
+
+    ratedMovieRedisReactiveCommands.get(movie.id.toString())
+      .switchIfEmpty(
+
+      MathObservable.averageDouble(mongoDatabase.getCollection(RatingCodec.COLLETION_NAME, Rating)
+        .find(eq(RatingCodec.MOVIE_ID_PROPERTY, movie.id))
+        .toObservable()
+        .map({ final Rating rating ->
+
+        rating.rating
+      } as Func1)
+        .defaultIfEmpty(Double.valueOf(0)))
+        .map({ final Double rating ->
+
+        new RatedMovie(
+
+          id: movie.id,
+          name: movie.name,
+          description: movie.description,
+          imageURI: movie.imageURI,
+          rating: rating
+        )
+      })
+        .doOnNext { final RatedMovie ratedMovie ->
+
+        ratedMovieRedisReactiveCommands.set(Util.getRedisMovieKey(ratedMovie), ratedMovie, SetArgs.Builder.ex(redisConfig.movieRatingsCacheTTLInSeconds)).subscribe()
+      }
+    )
+  } as Func1
+
   Observable<Movie> getMovie(final ObjectId objectId) {
 
     mongoDatabase.getCollection(MovieCodec.COLLETION_NAME, Movie)
       .find(eq(DBCollection.ID_FIELD_NAME, objectId))
       .toObservable()
+      .flatMap(MOVIE_TO_RATED_MOVIE)
       .bindExec()
   }
 
@@ -106,35 +138,7 @@ class MovieService {
     mongoDatabase.getCollection(MovieCodec.COLLETION_NAME, Movie)
       .find()
       .toObservable()
-      .flatMap({ final Movie movie ->
-
-      ratedMovieRedisReactiveCommands.get(movie.id.toString())
-        .switchIfEmpty(
-
-        MathObservable.averageDouble(mongoDatabase.getCollection(RatingCodec.COLLETION_NAME, Rating)
-          .find(eq(RatingCodec.MOVIE_ID_PROPERTY, movie.id))
-          .toObservable()
-          .map({ final Rating rating ->
-
-          rating.rating
-        } as Func1))
-          .map({ final Double rating ->
-
-          new RatedMovie(
-
-            id: movie.id,
-            name: movie.name,
-            description: movie.description,
-            imageURI: movie.imageURI,
-            rating: rating
-          )
-        })
-        .doOnNext { final RatedMovie ratedMovie ->
-
-          ratedMovieRedisReactiveCommands.set(Util.getRedisMovieKey(ratedMovie), ratedMovie, SetArgs.Builder.ex(redisConfig.movieRatingsCacheTTLInSeconds)).subscribe()
-        }
-      )
-    } as Func1)
+      .flatMap(MOVIE_TO_RATED_MOVIE)
     .bindExec()
   }
 }

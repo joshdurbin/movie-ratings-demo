@@ -49,21 +49,17 @@ class AuthenticationService {
   @Inject
   RedisConfig redisConfig
 
-  final Func1 USER_TO_JWT = new Func1<User, String>() {
+  private final Func1 USER_TO_JWT = { final User user ->
 
-    @Override
-    String call(User user) {
-
-      Jwts
-        .builder()
-        .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
-        .setIssuedAt(new Date())
-        .setExpiration(Date.from(LocalDateTime.now().plusHours(securityConfig.jwtTokenTTLInHours).toInstant(ZoneOffset.UTC)))
-        .claim(Constants.JWT_USER_OBJECT_ID_CLAIM, user.id.toString())
-        .signWith(SignatureAlgorithm.HS512, securityConfig.jwtSigningKey)
-        .compact()
-    }
-  }
+    Jwts
+      .builder()
+      .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
+      .setIssuedAt(new Date())
+      .setExpiration(Date.from(LocalDateTime.now().plusHours(securityConfig.jwtTokenTTLInHours).toInstant(ZoneOffset.UTC)))
+      .claim(Constants.JWT_USER_OBJECT_ID_CLAIM, user.id.toString())
+      .signWith(SignatureAlgorithm.HS512, securityConfig.jwtSigningKey)
+      .compact()
+  } as Func1
 
   /**
    *
@@ -125,6 +121,11 @@ class AuthenticationService {
       .bindExec()
   }
 
+  /**
+   *
+   * @param token
+   * @return
+   */
   Observable<User> validateToken(final String token) {
 
     Blocking.get {

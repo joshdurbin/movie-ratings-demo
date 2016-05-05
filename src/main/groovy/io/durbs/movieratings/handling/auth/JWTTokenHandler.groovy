@@ -5,6 +5,7 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.durbs.movieratings.Constants
 import io.durbs.movieratings.model.User
 import io.durbs.movieratings.services.AuthenticationService
 import io.netty.handler.codec.http.HttpResponseStatus
@@ -24,9 +25,11 @@ class JWTTokenHandler extends GroovyHandler {
   protected void handle(GroovyContext context) {
 
     if (context.request.headers.contains(HttpHeaders.AUTHORIZATION)
-      && context.request.headers.get(HttpHeaders.AUTHORIZATION)) {
+      && context.request.headers.get(HttpHeaders.AUTHORIZATION)?.startsWith(Constants.BEARER_AUTHORIZATION_SCHEMA_KEY)) {
 
-      authenticationService.validateToken(context.request.headers.get(HttpHeaders.AUTHORIZATION))
+      final String token = context.request.headers.get(HttpHeaders.AUTHORIZATION) - Constants.BEARER_AUTHOIRZATION_PREFIX
+
+      authenticationService.validateToken(token)
         .doOnError { final Throwable throwable ->
 
         log.error('An error occurred attempting to validate the JWT token', throwable)

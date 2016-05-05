@@ -1,5 +1,6 @@
 package io.durbs.movieratings.handling.auth
 
+import com.google.common.net.HttpHeaders
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import groovy.transform.CompileStatic
@@ -40,9 +41,10 @@ class LoginHandler extends GroovyHandler {
       if (jwt != Constants.PLACE_HOLDER_INVALID_JWT_TOKEN) {
 
         context.render(Jackson.json(jwt))
+        context.response.headers.add(HttpHeaders.AUTHORIZATION, "${Constants.BEARER_AUTHORIZATION_SCHEMA_KEY} ${jwt}")
       } else {
 
-        context.render(Jackson.json(jwt))
+        context.clientError(401)
       }
     }
   }
