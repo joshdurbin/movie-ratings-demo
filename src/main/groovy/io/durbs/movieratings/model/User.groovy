@@ -1,5 +1,6 @@
 package io.durbs.movieratings.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.Canonical
 import groovy.transform.CompileStatic
 import org.bson.BsonDocument
@@ -12,6 +13,7 @@ import org.bson.types.ObjectId
 @CompileStatic
 class User implements Bson {
 
+  @JsonIgnore
   ObjectId id
 
   String username

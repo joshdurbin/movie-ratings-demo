@@ -10,13 +10,13 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.lambdaworks.redis.codec.RedisCodec
 import groovy.transform.CompileStatic
-import io.durbs.movieratings.model.User
+import io.durbs.movieratings.model.RatedMovie
 
 import java.nio.ByteBuffer
 
 @Singleton
 @CompileStatic
-class UserCodec implements RedisCodec<String, User> {
+class RatedMovieCodec implements RedisCodec<String, RatedMovie> {
 
   static final int DEFAULT_BUFFER = 1024 * 100
 
@@ -30,16 +30,16 @@ class UserCodec implements RedisCodec<String, User> {
   }
 
   @Override
-  User decodeValue(final ByteBuffer byteBuffer) {
+  RatedMovie decodeValue(final ByteBuffer byteBuffer) {
 
     final byte[] bytes = new byte[byteBuffer.remaining()]
     byteBuffer.get(bytes)
 
-    kryoPool.run(new KryoCallback<User>() {
+    kryoPool.run(new KryoCallback<RatedMovie>() {
 
       @Override
-      User execute(Kryo kryo) {
-        kryo.readObject(new Input(bytes), User)
+      RatedMovie execute(Kryo kryo) {
+        kryo.readObject(new Input(bytes), RatedMovie)
       }
     })
   }
@@ -51,12 +51,12 @@ class UserCodec implements RedisCodec<String, User> {
   }
 
   @Override
-  ByteBuffer encodeValue(final User user) {
+  ByteBuffer encodeValue(final RatedMovie ratedMovie) {
 
     final Output output = new Output(new ByteArrayOutputStream(), DEFAULT_BUFFER)
 
     final Kryo kryo = kryoPool.borrow()
-    kryo.writeObject(output, user)
+    kryo.writeObject(output, ratedMovie)
     kryoPool.release(kryo)
 
     ByteBuffer.wrap(output.toBytes())

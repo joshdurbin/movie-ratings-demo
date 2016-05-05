@@ -3,6 +3,8 @@ package io.durbs.movieratings
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.pool.KryoFactory
 import com.esotericsoftware.kryo.pool.KryoPool
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.module.SimpleModule
 import com.google.inject.AbstractModule
 import com.google.inject.Provides
 import com.google.inject.Singleton
@@ -21,18 +23,27 @@ import com.mongodb.rx.client.MongoClients
 import com.mongodb.rx.client.MongoDatabase
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.durbs.movieratings.codec.ObjectIDSerializer
+import io.durbs.movieratings.codec.mongo.MovieCodec
+import io.durbs.movieratings.codec.mongo.RatingCodec
 import io.durbs.movieratings.codec.mongo.UserCodec as MongoUserCodec
+import io.durbs.movieratings.codec.redis.RatedMovieCodec
 import io.durbs.movieratings.codec.redis.UserCodec as RedisUserCodec
+import io.durbs.movieratings.config.AWSConfig
 import io.durbs.movieratings.config.MongoConfig
 import io.durbs.movieratings.config.RedisConfig
 import io.durbs.movieratings.config.SecurityConfig
-import io.durbs.movieratings.handler.auth.JWTTokenHandler
-import io.durbs.movieratings.handler.auth.RegistrationHandler
-import io.durbs.movieratings.handler.auth.LoginHandler
+import io.durbs.movieratings.handling.MovieRestEndpoint
+import io.durbs.movieratings.handling.auth.JWTTokenHandler
+import io.durbs.movieratings.handling.auth.RegistrationHandler
+import io.durbs.movieratings.handling.auth.LoginHandler
+import io.durbs.movieratings.model.RatedMovie
 import io.durbs.movieratings.model.User
 import io.durbs.movieratings.services.AuthenticationService
+import io.durbs.movieratings.services.MovieService
 import org.bson.codecs.configuration.CodecRegistries
 import org.bson.codecs.configuration.CodecRegistry
+import org.bson.types.ObjectId
 import ratpack.config.ConfigData
 
 @CompileStatic
@@ -42,12 +53,27 @@ class MovieRatingsModule extends AbstractModule {
   @Override
   protected void configure() {
 
+    // redis codecs
+    bind(RatedMovieCodec)
     bind(RedisUserCodec)
-    bind(JWTTokenHandler)
-    bind(RegistrationHandler)
-    bind(LoginHandler)
-    bind(AuthenticationService)
 
+    // handlers and chains
+    bind(JWTTokenHandler)
+    bind(LoginHandler)
+    bind(RegistrationHandler)
+    bind(MovieRestEndpoint)
+
+    // services
+    bind(AuthenticationService)
+    bind(MovieService)
+
+  }
+
+  @Provides
+  @Singleton
+  ObjectMapper provideCustomObjectMapper() {
+
+    new ObjectMapper().registerModule(new SimpleModule().addSerializer(ObjectId, new ObjectIDSerializer()))
   }
 
   @Provides
@@ -62,6 +88,13 @@ class MovieRatingsModule extends AbstractModule {
         new Kryo()
       }
     }).softReferences().build()
+  }
+
+  @Provides
+  @Singleton
+  AWSConfig provideAWSConfig(final ConfigData configData) {
+
+    configData.get(AWSConfig.CONFIG_ROOT, AWSConfig)
   }
 
   @Provides
@@ -87,12 +120,22 @@ class MovieRatingsModule extends AbstractModule {
 
   @Provides
   @Singleton
-  RedisReactiveCommands<String, User> productRedisCommands(
+  RedisReactiveCommands<String, User> userRedisCommands(
     final RedisConfig redisConfig,
     final RedisUserCodec userCodec) {
 
     final RedisClient redisClient = RedisClient.create(redisConfig.uri)
     redisClient.connect(userCodec).reactive()
+  }
+
+  @Provides
+  @Singleton
+  RedisReactiveCommands<String, RatedMovie> ratedMovieRedisCommands(
+    final RedisConfig redisConfig,
+    final RatedMovieCodec ratedMovieCodec) {
+
+    final RedisClient redisClient = RedisClient.create(redisConfig.uri)
+    redisClient.connect(ratedMovieCodec).reactive()
   }
 
   @Provides
@@ -103,7 +146,7 @@ class MovieRatingsModule extends AbstractModule {
 
     final CodecRegistry codecRegistry = CodecRegistries.fromRegistries(
       MongoClient.getDefaultCodecRegistry(),
-      CodecRegistries.fromCodecs(new MongoUserCodec()))
+      CodecRegistries.fromCodecs(new MovieCodec(), new RatingCodec(), new MongoUserCodec()))
 
     MongoClientSettings.Builder mongoClientSettingsBuidler = MongoClientSettings.builder()
       .codecRegistry(codecRegistry)

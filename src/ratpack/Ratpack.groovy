@@ -1,10 +1,8 @@
 import io.durbs.movieratings.MovieRatingsModule
-import io.durbs.movieratings.handler.auth.JWTTokenHandler
-import io.durbs.movieratings.handler.auth.RegistrationHandler
-import io.durbs.movieratings.handler.auth.LoginHandler
+import io.durbs.movieratings.handling.MovieRestEndpoint
+import io.durbs.movieratings.handling.auth.RegistrationHandler
+import io.durbs.movieratings.handling.auth.LoginHandler
 import ratpack.config.ConfigData
-import ratpack.handling.Chain
-import ratpack.jackson.Jackson
 import ratpack.rx.RxRatpack
 
 import static ratpack.groovy.Groovy.ratpack
@@ -28,13 +26,9 @@ ratpack {
 
     post('register', RegistrationHandler)
     post('login', LoginHandler)
-    prefix('api') { Chain chain ->
+    prefix('api') {
 
-      chain.all(JWTTokenHandler)
-
-      get('things') {
-        render Jackson.json('tada')
-      }
+      all chain(MovieRestEndpoint)
     }
   }
 }

@@ -5,10 +5,10 @@ import groovy.transform.Immutable
 
 @Immutable
 @CompileStatic
-class RedisConfig {
+class AWSConfig {
 
-  static String CONFIG_ROOT = '/redis'
+  static String CONFIG_ROOT = '/aws'
 
-  String uri
-  Long movieRatingsCacheTTLInSeconds
+  String accessKey
+  String secretKey
 }

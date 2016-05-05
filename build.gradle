@@ -19,6 +19,9 @@ repositories {
 dependencies {
 
   compile ratpack.dependency('rx')
+  compile 'io.reactivex:rxjava-math:1.0.0'
+
+  compile 'com.amazonaws:aws-java-sdk-s3:1.10.75'
 
   compile 'io.jsonwebtoken:jjwt:0.6.0'
 

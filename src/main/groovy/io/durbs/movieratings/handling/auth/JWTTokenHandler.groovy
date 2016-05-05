@@ -1,7 +1,8 @@
-package io.durbs.movieratings.handler.auth
+package io.durbs.movieratings.handling.auth
 
 import com.google.common.net.HttpHeaders
 import com.google.inject.Inject
+import com.google.inject.Singleton
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.durbs.movieratings.model.User
@@ -11,8 +12,9 @@ import ratpack.groovy.handling.GroovyContext
 import ratpack.groovy.handling.GroovyHandler
 import ratpack.registry.Registry
 
-@CompileStatic
+@Singleton
 @Slf4j
+@CompileStatic
 class JWTTokenHandler extends GroovyHandler {
 
   @Inject

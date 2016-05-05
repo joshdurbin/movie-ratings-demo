@@ -68,7 +68,7 @@ class UserCodec implements CollectibleCodec<User> {
   @Override
   User generateIdIfAbsentFromDocument(final User user) {
 
-    if (documentHasId(user)) {
+    if (!documentHasId(user)) {
       user.setId(new ObjectId())
     }
 

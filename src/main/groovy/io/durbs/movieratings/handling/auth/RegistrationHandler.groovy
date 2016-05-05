@@ -1,7 +1,8 @@
-package io.durbs.movieratings.handler.auth
+package io.durbs.movieratings.handling.auth
 
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.durbs.movieratings.model.User
 import io.durbs.movieratings.services.AuthenticationService
@@ -14,6 +15,7 @@ import static ratpack.jackson.Jackson.fromJson
 
 @Singleton
 @Slf4j
+@CompileStatic
 class RegistrationHandler extends GroovyHandler {
 
   @Inject
