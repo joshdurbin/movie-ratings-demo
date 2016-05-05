@@ -17,6 +17,7 @@ class User implements Bson {
   ObjectId id
 
   String username
+  String name
   String emailAddress
   String password
 

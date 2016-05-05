@@ -8,6 +8,7 @@ import groovy.transform.CompileStatic
 class ViewableRating {
 
   String username
+  String usersGivenName
   Double rating
   String comment
 }

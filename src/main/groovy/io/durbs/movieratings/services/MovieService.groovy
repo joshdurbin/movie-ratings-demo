@@ -8,6 +8,7 @@ import com.mongodb.DBCollection
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.rx.client.MongoDatabase
 import groovy.util.logging.Slf4j
+import io.durbs.movieratings.Util
 import io.durbs.movieratings.codec.mongo.MovieCodec
 import io.durbs.movieratings.codec.mongo.RatingCodec
 import io.durbs.movieratings.codec.mongo.UserCodec
@@ -58,7 +59,7 @@ class MovieService {
           .toObservable()
           .map({ final User user ->
 
-          new ViewableRating(username: user.username, rating: rating.rating, comment: rating.comment)
+          new ViewableRating(username: user.username, usersGivenName: user.name, rating: rating.rating, comment: rating.comment)
         })
       } as Func1)
       .bindExec()
@@ -130,7 +131,7 @@ class MovieService {
         })
         .doOnNext { final RatedMovie ratedMovie ->
 
-          ratedMovieRedisReactiveCommands.set(movie.id.toString(), ratedMovie, SetArgs.Builder.ex(redisConfig.movieRatingsCacheTTLInSeconds)).subscribe()
+          ratedMovieRedisReactiveCommands.set(Util.getRedisMovieKey(ratedMovie), ratedMovie, SetArgs.Builder.ex(redisConfig.movieRatingsCacheTTLInSeconds)).subscribe()
         }
       )
     } as Func1)

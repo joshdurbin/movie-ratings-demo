@@ -2,6 +2,7 @@ package io.durbs.movieratings.services
 
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import com.lambdaworks.redis.SetArgs
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands
 import com.mongodb.DBCollection
 import com.mongodb.client.model.Updates
@@ -11,7 +12,9 @@ import de.qaware.heimdall.PasswordFactory
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.durbs.movieratings.Constants
+import io.durbs.movieratings.Util
 import io.durbs.movieratings.codec.mongo.UserCodec
+import io.durbs.movieratings.config.RedisConfig
 import io.durbs.movieratings.config.SecurityConfig
 import io.durbs.movieratings.model.User
 import io.jsonwebtoken.Header
@@ -43,6 +46,9 @@ class AuthenticationService {
   @Inject
   MongoDatabase mongoDatabase
 
+  @Inject
+  RedisConfig redisConfig
+
   final Func1 USER_TO_JWT = new Func1<User, String>() {
 
     @Override
@@ -68,11 +74,13 @@ class AuthenticationService {
    */
   Observable<String> createAccount(final String username, final String password, final String emailAddress) {
 
-    final Observable<User> userInsertionAndQueryObservable = mongoDatabase.getCollection(UserCodec.COLLETION_NAME, User)
-      .insertOne(new User(
+    final User userToInsert = new User(
       username: username,
       password: PasswordFactory.create().hash(password),
-      emailAddress: emailAddress))
+      emailAddress: emailAddress)
+
+    final Observable<User> userInsertionObservable = mongoDatabase.getCollection(UserCodec.COLLETION_NAME, User)
+      .insertOne(userToInsert)
       .flatMap({ final Success success ->
 
       mongoDatabase.getCollection(UserCodec.COLLETION_NAME, User)
@@ -83,7 +91,7 @@ class AuthenticationService {
     mongoDatabase.getCollection(UserCodec.COLLETION_NAME, User)
       .find(eq(UserCodec.USERNAME_PROPERTY, username))
       .toObservable()
-      .switchIfEmpty(userInsertionAndQueryObservable)
+      .switchIfEmpty(userInsertionObservable)
       .map(USER_TO_JWT)
       .bindExec()
   }
@@ -137,7 +145,7 @@ class AuthenticationService {
             .toObservable()
             .doOnNext { final User user ->
 
-               userRedisCommands.hset(USER_HASH_KEY, user.id.toString(), user).subscribe()
+              userRedisCommands.set(Util.getRedisUserKey(user), user, SetArgs.Builder.ex(redisConfig.movieRatingsCacheTTLInSeconds)).subscribe()
           }
       )
     } as Func1)
