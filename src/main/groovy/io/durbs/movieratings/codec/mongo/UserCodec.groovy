@@ -21,6 +21,7 @@ import org.bson.types.ObjectId
 class UserCodec implements CollectibleCodec<User> {
 
   public static final String USERNAME_PROPERTY = 'username'
+  public static final String NAME_PROPERTY = 'name'
   public static final String PASSWORD_PROPERTY = 'password'
   public static final String EMAIL_ADDRESS_PROPERTY = 'emailAddress'
 
@@ -36,6 +37,7 @@ class UserCodec implements CollectibleCodec<User> {
     new User(
       id: document.getObjectId(DBCollection.ID_FIELD_NAME),
       username: document.getString(USERNAME_PROPERTY),
+      name: document.getString(NAME_PROPERTY),
       password: document.getString(PASSWORD_PROPERTY),
       emailAddress: document.getString(EMAIL_ADDRESS_PROPERTY))
   }
@@ -45,8 +47,16 @@ class UserCodec implements CollectibleCodec<User> {
 
     final Document document = new Document()
 
+    if (user.id) {
+      document.put(DBCollection.ID_FIELD_NAME, user.id)
+    }
+
     if (user.username) {
       document.put(USERNAME_PROPERTY, user.username)
+    }
+
+    if (user.name) {
+      document.put(NAME_PROPERTY, user.name)
     }
 
     if (user.password) {

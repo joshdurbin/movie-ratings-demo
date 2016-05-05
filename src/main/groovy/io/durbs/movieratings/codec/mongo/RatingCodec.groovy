@@ -47,6 +47,10 @@ class RatingCodec implements CollectibleCodec<Rating> {
 
     final Document document = new Document()
 
+    if (rating.id) {
+      document.put(DBCollection.ID_FIELD_NAME, rating.id)
+    }
+
     if (rating.userID) {
       document.put(USER_ID_PROPERTY, rating.userID)
     }

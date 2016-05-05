@@ -45,6 +45,10 @@ class MovieCodec implements CollectibleCodec<Movie> {
 
     final Document document = new Document()
 
+    if (movie.id) {
+      document.put(DBCollection.ID_FIELD_NAME, movie.id)
+    }
+
     if (movie.name) {
       document.put(NAME_PROPERTY, movie.name)
     }
