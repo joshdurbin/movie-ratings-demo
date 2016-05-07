@@ -20,8 +20,8 @@ import org.bson.types.ObjectId
 @Slf4j
 class RatingCodec implements CollectibleCodec<Rating> {
 
-  public static final String USER_ID_PROPERTY = 'userID'
-  public static final String MOVIE_ID_PROPERTY = 'movieID'
+  public static final String USER_ID_PROPERTY = 'userId'
+  public static final String MOVIE_ID_PROPERTY = 'movieId'
   public static final String RATING_PROPERTY = 'rating'
   public static final String COMMENT_PROPERTY = 'comment'
 
@@ -36,9 +36,9 @@ class RatingCodec implements CollectibleCodec<Rating> {
 
     new Rating(
       id: document.getObjectId(DBCollection.ID_FIELD_NAME),
-      userID: document.getObjectId(USER_ID_PROPERTY),
-      movieID: document.getObjectId(MOVIE_ID_PROPERTY),
-      rating: document.getDouble(RATING_PROPERTY),
+      userId: document.getObjectId(USER_ID_PROPERTY),
+      movieId: document.getObjectId(MOVIE_ID_PROPERTY),
+      rating: document.getInteger(RATING_PROPERTY),
       comment: document.getString(COMMENT_PROPERTY))
   }
 
@@ -51,12 +51,12 @@ class RatingCodec implements CollectibleCodec<Rating> {
       document.put(DBCollection.ID_FIELD_NAME, rating.id)
     }
 
-    if (rating.userID) {
-      document.put(USER_ID_PROPERTY, rating.userID)
+    if (rating.userId) {
+      document.put(USER_ID_PROPERTY, rating.userId)
     }
 
-    if (rating.movieID) {
-      document.put(MOVIE_ID_PROPERTY, rating.movieID)
+    if (rating.movieId) {
+      document.put(MOVIE_ID_PROPERTY, rating.movieId)
     }
 
     if (rating.rating) {

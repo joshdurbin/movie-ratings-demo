@@ -9,6 +9,6 @@ class ViewableRating {
 
   String username
   String usersGivenName
-  Double rating
+  Integer rating
   String comment
 }

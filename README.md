@@ -1,49 +1,20 @@
-[![Stories in Ready](https://badge.waffle.io/joshdurbin/movie-ratings-demo.png?label=ready&title=Ready)](https://waffle.io/joshdurbin/movie-ratings-demo)
-Ratpack project template
------------------------------
+# movie ratings demo API
 
-You have just created a basic Groovy Ratpack application. It doesn't do much
-at this point, but we have set you up with a standard project structure, a 
-Guice back Registry, simple home page, and Spock for writing tests (because 
-you'd be mad not to use it).
+This API is intended for use by a soon-to-be-delivered Ionic mobile application.
 
-In this project you get:
+The API has two sets of endpoints. Endpoints that require authentication and those that don't.
 
-* A Gradle build file with pre-built Gradle wrapper
-* A tiny home page at src/ratpack/templates/index.html (it's a template)
-* A routing file at src/ratpack/Ratpack.groovy
-* Reloading enabled in build.gradle
-* A standard project structure:
+The list of unrestricted endpoints includes:
 
-    <proj>
-      |
-      +- src
-          |
-          +- ratpack
-          |     |
-          |     +- Ratpack.groovy
-          |     +- ratpack.properties
-          |     +- public // Static assets in here
-          |          |
-          |          +- images
-          |          +- lib
-          |          +- scripts
-          |          +- styles
-          |
-          +- main
-          |   |
-          |   +- groovy
-                   |
-                   +- // App classes in here!
-          |
-          +- test
-              |
-              +- groovy
-                   |
-                   +- // Spock tests in here!
+* Registration with a `POST` to `/register` with a JSON payload of `{'username':'', 'password':'', 'emailAddress':'', 'name':''}` and, if successful, returns an Authentication Header with the Bearer schema containing a JWT.
+* Login with a `POST` to `/login` with a JSON payload of `{'username':'', 'password':''}` and, if successful, returns an Authentication Header with the Bearer schema containing a JWT.
+* Get All Movies with a `GET` to `/api/movies`
+* Get a particular Movie with a `GET` to `/api/movie/$id`
+* Search for Movies with a `GET` to `/api/movies/search` with a query parameter `q` containing the search terms
+* Get the individual ratings, comments, and user names for a Movie with a `GET` to `/api/movie/$id/ratings`
 
-That's it! You can start the basic app with
+The list of restricted endpoints includes:
 
-    ./gradlew run
-
-but it's up to you to add the bells, whistles, and meat of the application.
+* Creation of a movie with a `POST` to `/api/movie` with a JSON payload of `{'name':'', 'description':'', 'imageURI':''}`. The API will redirect the caller to the individual resource once it's created... ex: `/api/movie/$id`
+* Removal of a movie and all ratings with a `DELETE` to `/api/movie/$id`
+* Creation of a rating with a `POST` to `/api/movie/$id/rating` with a JSON payload of `{'rating':'', 'comment':''}`. A rating is defined as an integer ranging from 0-10.

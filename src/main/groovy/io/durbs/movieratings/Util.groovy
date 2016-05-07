@@ -4,6 +4,7 @@ import com.google.inject.Singleton
 import groovy.transform.CompileStatic
 import io.durbs.movieratings.model.Movie
 import io.durbs.movieratings.model.User
+import org.bson.types.ObjectId
 
 @CompileStatic
 @Singleton
@@ -15,7 +16,11 @@ class Util {
   }
 
   public static final String getRedisMovieKey(final Movie movie) {
-    "${Constants.REDIS_MOVIE_KEY_PREFIX}-${movie.id.toString()}"
+    getRedisMovieKey(movie.id)
+  }
+
+  public static final String getRedisMovieKey(final ObjectId objectId) {
+    "${Constants.REDIS_MOVIE_KEY_PREFIX}-${objectId.toString()}"
   }
 
 }

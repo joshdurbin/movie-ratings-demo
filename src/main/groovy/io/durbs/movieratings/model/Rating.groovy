@@ -10,8 +10,8 @@ class Rating {
 
   ObjectId id
 
-  ObjectId userID
-  ObjectId movieID
-  Double rating
+  ObjectId userId
+  ObjectId movieId
+  Integer rating
   String comment
 }

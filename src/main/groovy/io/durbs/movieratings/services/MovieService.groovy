@@ -5,9 +5,13 @@ import com.google.inject.Singleton
 import com.lambdaworks.redis.SetArgs
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands
 import com.mongodb.DBCollection
+import com.mongodb.client.model.Updates
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.rx.client.MongoDatabase
+import com.mongodb.rx.client.Success
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.durbs.movieratings.Constants
 import io.durbs.movieratings.Util
 import io.durbs.movieratings.codec.mongo.MovieCodec
 import io.durbs.movieratings.codec.mongo.RatingCodec
@@ -18,14 +22,18 @@ import io.durbs.movieratings.model.RatedMovie
 import io.durbs.movieratings.model.Rating
 import io.durbs.movieratings.model.User
 import io.durbs.movieratings.model.ViewableRating
+import org.bson.conversions.Bson
 import org.bson.types.ObjectId
 import rx.Observable
+import rx.functions.Action1
 import rx.functions.Func1
 import rx.functions.Func3
 import rx.observables.MathObservable
 
+import static com.mongodb.client.model.Filters.and
 import static com.mongodb.client.model.Filters.eq
 
+@CompileStatic
 @Singleton
 @Slf4j
 class MovieService {
@@ -44,14 +52,14 @@ class MovieService {
     ratedMovieRedisReactiveCommands.get(movie.id.toString())
       .switchIfEmpty(
 
-      MathObservable.averageDouble(mongoDatabase.getCollection(RatingCodec.COLLETION_NAME, Rating)
+      MathObservable.averageInteger(mongoDatabase.getCollection(RatingCodec.COLLETION_NAME, Rating)
         .find(eq(RatingCodec.MOVIE_ID_PROPERTY, movie.id))
         .toObservable()
         .map({ final Rating rating ->
 
         rating.rating
       } as Func1)
-        .defaultIfEmpty(Double.valueOf(0)))
+        .defaultIfEmpty(Constants.DEFAULT_RATING))
         .map({ final Double rating ->
 
         new RatedMovie(
@@ -87,7 +95,7 @@ class MovieService {
       .flatMap({ final Rating rating ->
 
         mongoDatabase.getCollection(UserCodec.COLLETION_NAME, User)
-          .find(eq(DBCollection.ID_FIELD_NAME, rating.userID))
+          .find(eq(DBCollection.ID_FIELD_NAME, rating.userId))
           .toObservable()
           .map({ final User user ->
 
@@ -125,18 +133,37 @@ class MovieService {
     .bindExec()
   }
 
-//  Observable<Boolean> rateMovie(final ObjectId movieID, final ObjectId userID, final Double rating) {
-//
-//    mongoDatabase.getCollection(RatingCodec.COLLETION_NAME, Rating)
-//      .find(and(eq(RatingCodec.MOVIE_ID_PROPERTY, movieID), eq(RatingCodec.USER_ID_PROPERTY, userID)))
-//      .toObservable()
-//      .
-//  }
+  Observable<Rating> rateMovie(final Rating rating) {
 
-  Observable<RatedMovie> getAllMovies() {
+    mongoDatabase.getCollection(RatingCodec.COLLETION_NAME, Rating)
+      .findOneAndUpdate(and(eq(RatingCodec.MOVIE_ID_PROPERTY, rating.movieId), eq(RatingCodec.USER_ID_PROPERTY, rating.userId)),
+        Updates.combine(
+          Updates.set(RatingCodec.RATING_PROPERTY, rating.rating),
+          Updates.set(RatingCodec.COMMENT_PROPERTY, rating.comment)))
+      .asObservable()
+      .switchIfEmpty(
+        mongoDatabase.getCollection(RatingCodec.COLLETION_NAME, Rating)
+          .insertOne(rating)
+          .map { final Success success ->
+
+            rating
+          }
+      )
+      .asObservable()
+      .doOnNext ({ final Rating observedRating ->
+
+      ratedMovieRedisReactiveCommands.del(Util.getRedisMovieKey(observedRating.movieId))
+    } as Action1)
+    .bindExec()
+  }
+
+  Observable<RatedMovie> getAllMovies(final Bson queryFilter, final Integer limit, final Integer recordsToSkip) {
 
     mongoDatabase.getCollection(MovieCodec.COLLETION_NAME, Movie)
       .find()
+      .filter(queryFilter)
+      .limit(limit)
+      .skip(recordsToSkip)
       .toObservable()
       .flatMap(MOVIE_TO_RATED_MOVIE)
     .bindExec()
