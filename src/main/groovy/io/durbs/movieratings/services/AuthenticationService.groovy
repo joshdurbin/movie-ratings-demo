@@ -16,7 +16,7 @@ import io.durbs.movieratings.Util
 import io.durbs.movieratings.codec.mongo.UserCodec
 import io.durbs.movieratings.config.RedisConfig
 import io.durbs.movieratings.config.SecurityConfig
-import io.durbs.movieratings.model.User
+import io.durbs.movieratings.model.persistent.User
 import io.jsonwebtoken.Header
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm

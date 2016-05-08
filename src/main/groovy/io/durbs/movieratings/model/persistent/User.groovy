@@ -1,4 +1,4 @@
-package io.durbs.movieratings.model
+package io.durbs.movieratings.model.persistent
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.Canonical

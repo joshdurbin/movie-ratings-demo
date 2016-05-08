@@ -6,7 +6,7 @@ import com.google.inject.Singleton
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.durbs.movieratings.Constants
-import io.durbs.movieratings.model.User
+import io.durbs.movieratings.model.persistent.User
 import io.durbs.movieratings.services.AuthenticationService
 import ratpack.groovy.handling.GroovyContext
 import ratpack.groovy.handling.GroovyHandler

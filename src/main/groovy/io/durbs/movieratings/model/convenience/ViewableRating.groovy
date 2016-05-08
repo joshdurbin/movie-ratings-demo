@@ -1,4 +1,4 @@
-package io.durbs.movieratings.model
+package io.durbs.movieratings.model.convenience
 
 import groovy.transform.Canonical
 import groovy.transform.CompileStatic

@@ -1,4 +1,4 @@
-package io.durbs.movieratings.model
+package io.durbs.movieratings.model.persistent
 
 import groovy.transform.Canonical
 import groovy.transform.CompileStatic
@@ -6,11 +6,12 @@ import org.bson.types.ObjectId
 
 @Canonical
 @CompileStatic
-class Movie {
+class Rating {
 
   ObjectId id
 
-  String name
-  String description
-  String imageURI
+  ObjectId userId
+  ObjectId movieId
+  Integer rating
+  String comment
 }

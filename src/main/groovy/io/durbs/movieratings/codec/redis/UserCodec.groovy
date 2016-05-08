@@ -10,7 +10,7 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.lambdaworks.redis.codec.RedisCodec
 import groovy.transform.CompileStatic
-import io.durbs.movieratings.model.User
+import io.durbs.movieratings.model.persistent.User
 
 import java.nio.ByteBuffer
 

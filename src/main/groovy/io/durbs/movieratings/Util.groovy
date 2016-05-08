@@ -2,8 +2,8 @@ package io.durbs.movieratings
 
 import com.google.inject.Singleton
 import groovy.transform.CompileStatic
-import io.durbs.movieratings.model.Movie
-import io.durbs.movieratings.model.User
+import io.durbs.movieratings.model.persistent.Movie
+import io.durbs.movieratings.model.persistent.User
 import org.bson.types.ObjectId
 
 @CompileStatic

@@ -9,6 +9,9 @@ class APIConfig {
 
   static String CONFIG_ROOT = '/api'
 
+  Integer defaultResultsPageSize
+  Integer maxResultsPageSize
+  Integer defaultFirstPage
   Integer ratingLowerBound
   Integer ratingUpperBound
 }

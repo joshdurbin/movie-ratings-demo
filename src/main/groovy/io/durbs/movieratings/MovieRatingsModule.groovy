@@ -40,8 +40,8 @@ import io.durbs.movieratings.handling.MovieRestEndpoint
 import io.durbs.movieratings.handling.auth.JWTTokenHandler
 import io.durbs.movieratings.handling.auth.RegistrationHandler
 import io.durbs.movieratings.handling.auth.LoginHandler
-import io.durbs.movieratings.model.RatedMovie
-import io.durbs.movieratings.model.User
+import io.durbs.movieratings.model.persistent.RatedMovie
+import io.durbs.movieratings.model.persistent.User
 import io.durbs.movieratings.services.AuthenticationService
 import io.durbs.movieratings.services.MovieService
 import org.bson.Document

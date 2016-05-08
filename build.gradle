@@ -42,3 +42,5 @@ dependencies {
   testCompile 'com.github.kstyrc:embedded-redis:0.6'
   testCompile 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:1.50.3'
 }
+
+task stage(dependsOn: ['clean', 'installApp'])

@@ -12,16 +12,17 @@ import com.mongodb.rx.client.Success
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.durbs.movieratings.Constants
+import io.durbs.movieratings.PaginationSupport
 import io.durbs.movieratings.Util
 import io.durbs.movieratings.codec.mongo.MovieCodec
 import io.durbs.movieratings.codec.mongo.RatingCodec
 import io.durbs.movieratings.codec.mongo.UserCodec
 import io.durbs.movieratings.config.RedisConfig
-import io.durbs.movieratings.model.Movie
-import io.durbs.movieratings.model.RatedMovie
-import io.durbs.movieratings.model.Rating
-import io.durbs.movieratings.model.User
-import io.durbs.movieratings.model.ViewableRating
+import io.durbs.movieratings.model.persistent.Movie
+import io.durbs.movieratings.model.persistent.RatedMovie
+import io.durbs.movieratings.model.persistent.Rating
+import io.durbs.movieratings.model.persistent.User
+import io.durbs.movieratings.model.convenience.ViewableRating
 import org.bson.conversions.Bson
 import org.bson.types.ObjectId
 import rx.Observable
@@ -157,13 +158,13 @@ class MovieService {
     .bindExec()
   }
 
-  Observable<RatedMovie> getAllMovies(final Bson queryFilter, final Integer limit, final Integer recordsToSkip) {
+  Observable<RatedMovie> getAllMovies(final Bson queryFilter, final PaginationSupport paginationSupport) {
 
     mongoDatabase.getCollection(MovieCodec.COLLETION_NAME, Movie)
       .find()
       .filter(queryFilter)
-      .limit(limit)
-      .skip(recordsToSkip)
+      .limit(paginationSupport.pageSize)
+      .skip(paginationSupport.offSet)
       .toObservable()
       .flatMap(MOVIE_TO_RATED_MOVIE)
     .bindExec()

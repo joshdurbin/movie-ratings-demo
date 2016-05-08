@@ -2,7 +2,7 @@ aws:
   accessKey:
   secretKey:
 redis:
-  uri: redis://localhost:32771
+  uri: redis://localhost:32776
   movieRatingsCacheTTLInSeconds: 3600
 mongo:
   db: movie-ratings
@@ -13,3 +13,6 @@ security:
 api:
   ratingLowerBound: 0
   ratingUpperBound: 10
+  defaultResultsPageSize: 20
+  maxResultsPageSize: 50
+  defaultFirstPage: 0

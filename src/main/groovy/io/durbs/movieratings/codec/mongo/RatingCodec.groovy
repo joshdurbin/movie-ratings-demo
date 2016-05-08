@@ -3,7 +3,7 @@ package io.durbs.movieratings.codec.mongo
 import com.mongodb.DBCollection
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import io.durbs.movieratings.model.Rating
+import io.durbs.movieratings.model.persistent.Rating
 import org.bson.BsonReader
 import org.bson.BsonString
 import org.bson.BsonValue

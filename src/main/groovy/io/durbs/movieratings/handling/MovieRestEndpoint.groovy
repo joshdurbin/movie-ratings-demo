@@ -1,17 +1,17 @@
 package io.durbs.movieratings.handling
 
-import com.google.common.base.Preconditions
 import com.google.common.collect.Range
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import groovy.util.logging.Slf4j
+import io.durbs.movieratings.PaginationSupport
 import io.durbs.movieratings.config.APIConfig
 import io.durbs.movieratings.handling.auth.JWTTokenHandler
-import io.durbs.movieratings.model.Movie
-import io.durbs.movieratings.model.RatedMovie
-import io.durbs.movieratings.model.Rating
-import io.durbs.movieratings.model.User
-import io.durbs.movieratings.model.ViewableRating
+import io.durbs.movieratings.model.persistent.Movie
+import io.durbs.movieratings.model.persistent.RatedMovie
+import io.durbs.movieratings.model.persistent.Rating
+import io.durbs.movieratings.model.persistent.User
+import io.durbs.movieratings.model.convenience.ViewableRating
 import io.durbs.movieratings.services.MovieService
 import org.bson.Document
 import org.bson.types.ObjectId
@@ -39,7 +39,7 @@ class MovieRestEndpoint extends GroovyChainAction {
     get('movies') {
 
       movieService
-        .getAllMovies(new Document(), 20, 0)
+        .getAllMovies(new Document(), new PaginationSupport(context, apiConfig))
         .toList()
         .defaultIfEmpty([])
         .subscribe { final List<RatedMovie> movies ->
@@ -53,7 +53,7 @@ class MovieRestEndpoint extends GroovyChainAction {
       final String queryTerm = request.queryParams.get('q', '')
 
       movieService
-        .getAllMovies(text(queryTerm), 20, 0)
+        .getAllMovies(text(queryTerm), new PaginationSupport(context, apiConfig))
         .toList()
         .defaultIfEmpty([])
         .subscribe { final List<RatedMovie> movies ->
