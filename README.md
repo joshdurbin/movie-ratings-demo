@@ -21,4 +21,4 @@ The list of restricted endpoints includes:
 * Removal of a movie and all ratings with a `DELETE` to `/api/movie/$id`
 * Creation of a rating with a `POST` to `/api/movie/$id/rating` with a JSON payload of `{'rating':'', 'comment':''}`. A rating is defined as an integer ranging from 0-10.
 
-[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/joshdurbin/fda-ndc-rest)
+[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/joshdurbin/movie-ratings-demo)
