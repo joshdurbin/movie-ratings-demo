@@ -2,6 +2,8 @@
 
 This API is intended for use by a soon-to-be-delivered Ionic mobile application.
 
++[![Stories in Ready](https://badge.waffle.io/joshdurbin/movie-ratings-demo.png?label=ready&title=Ready)](https://waffle.io/joshdurbin/movie-ratings-demo)
+
 The API has two sets of endpoints. Endpoints that require authentication and those that don't.
 
 The list of unrestricted endpoints includes:
@@ -18,3 +20,5 @@ The list of restricted endpoints includes:
 * Creation of a movie with a `POST` to `/api/movie` with a JSON payload of `{'name':'', 'description':'', 'imageURI':''}`. The API will redirect the caller to the individual resource once it's created... ex: `/api/movie/$id`
 * Removal of a movie and all ratings with a `DELETE` to `/api/movie/$id`
 * Creation of a rating with a `POST` to `/api/movie/$id/rating` with a JSON payload of `{'rating':'', 'comment':''}`. A rating is defined as an integer ranging from 0-10.
+
+[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/joshdurbin/fda-ndc-rest)
