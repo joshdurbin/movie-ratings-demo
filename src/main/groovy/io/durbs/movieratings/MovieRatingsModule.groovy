@@ -66,10 +66,12 @@ class MovieRatingsModule extends AbstractModule {
     bind(RatedMovieCodec)
     bind(RedisUserCodec)
 
-    // handlers and chains
+    // handlers
     bind(JWTTokenHandler)
     bind(LoginHandler)
     bind(RegistrationHandler)
+
+    // chain
     bind(MovieRestEndpoint)
 
     // services
@@ -202,8 +204,8 @@ class MovieRatingsModule extends AbstractModule {
       @Override
       void onStop(StopEvent stopEvent) throws Exception {
 
-        userRedisCommands.shutdown(true).subscribe()
-        ratedMovieRedisCommands.shutdown(true).subscribe()
+        userRedisCommands.close()
+        ratedMovieRedisCommands.close()
       }
     }
   }
