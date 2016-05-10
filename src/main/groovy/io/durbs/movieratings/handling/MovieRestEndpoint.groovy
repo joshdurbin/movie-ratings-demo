@@ -36,18 +36,6 @@ class MovieRestEndpoint extends GroovyChainAction {
   @Override
   void execute() throws Exception {
 
-    get('movies') {
-
-      movieService
-        .getAllMovies(new Document(), new PaginationSupport(context, apiConfig))
-        .toList()
-        .defaultIfEmpty([])
-        .subscribe { final List<RatedMovie> movies ->
-
-        render Jackson.json(movies)
-      }
-    }
-
     get('movies/search') {
 
       final String queryTerm = request.queryParams.get('q', '')
@@ -62,100 +50,141 @@ class MovieRestEndpoint extends GroovyChainAction {
       }
     }
 
-    get('movie/:id') {
-
-      movieService
-        .getMovie(new ObjectId(pathTokens.get('id')))
-        .single()
-        .subscribe { final Movie movie ->
-
-        render Jackson.json(movie)
-      }
-    }
-
-    get('movie/:id/ratings') {
-
-      movieService
-        .getMovieRatings(new ObjectId(pathTokens.get('id')))
-        .toList()
-        .subscribe { final List<ViewableRating> ratings ->
-
-        render Jackson.json(ratings)
-      }
-    }
-
-    // all routes past here require a valid JWT token
-    all(JWTTokenHandler)
-
-    post('movie') {
-
-      context.parse(fromJson(Movie))
-        .observe()
-        .flatMap({ final Movie movie ->
-
-        movieService.createMovie(movie)
-      } as Func1)
-      .subscribe { final String movieID ->
-
-        redirect("/api/movie/${movieID}")
-      }
-    }
-
-    path('movie/:id') {
-
-      final String movieID = pathTokens.get('id')
+    path('movies') {
 
       byMethod {
 
-//        put {
-//
-//          context.parse(fromJson(Movie))
-//            .observe()
-//            .flatMap({ final Movie movie ->
-//
-//            movie.id = new ObjectId(movieID)
-//
-//
-//          })
-//        }
-
-        delete {
+        get {
 
           movieService
-            .deleteMovieByID(new ObjectId(movieID))
-            .single()
-            .subscribe { final Boolean success ->
+            .getAllMovies(new Document(), new PaginationSupport(context, apiConfig))
+            .toList()
+            .defaultIfEmpty([])
+            .subscribe { final List<RatedMovie> movies ->
 
-            redirect('/api/movies')
+            render Jackson.json(movies)
+          }
+        }
+
+        post {
+
+          context.get(JWTTokenHandler)
+
+          context.parse(fromJson(Movie))
+            .observe()
+            .flatMap({ final Movie movie ->
+
+            movieService.createMovie(movie)
+          } as Func1)
+            .subscribe { final String movieID ->
+
+            redirect("/api/movie/${movieID}")
           }
         }
       }
     }
 
-    path('movie/:id/rating') { final User user ->
-      byMethod {
-        post {
+    prefix('movies/:id') {
 
-          context.parse(fromJson(Rating))
-            .observe()
-            .flatMap({ final Rating rating ->
+      all {
 
-            final Range<Integer> acceptableRatingRange = Range.closed(apiConfig.ratingLowerBound, apiConfig.ratingUpperBound)
-            if (!acceptableRatingRange.contains(rating.rating)) {
+        final String movieId = context.pathTokens.get('id')
 
-              throw new IllegalArgumentException("A range must be between ")
+        if (ObjectId.isValid(movieId)) {
+
+          next(single(new ObjectId(movieId)))
+        } else {
+
+          log.debug("Request path does not contain a valid ObjectId '${movieId}'")
+          context.clientError(404)
+        }
+      }
+
+      path { final ObjectId movieId ->
+
+        byMethod {
+
+          get {
+
+            movieService
+              .getMovie(movieId)
+              .single()
+              .doOnError({
+
+              context.clientError(404)
+            })
+              .subscribe { final Movie movie ->
+
+              render Jackson.json(movie)
             }
+          }
 
-            final String movieID = pathTokens.get('id')
+          put {
 
-            rating.movieId = new ObjectId(movieID)
-            rating.userId = user.id
+            context.get(JWTTokenHandler)
 
-            movieService.rateMovie(rating)
-          } as Func1)
-            .subscribe { final Rating rating ->
+            context.parse(fromJson(Movie))
+              .observe()
+              .flatMap({ final Movie movie ->
 
-            redirect("/api/movie/${rating.movieId.toString()}")
+              render(Jackson.json('things'))
+            })
+
+          }
+
+          delete {
+
+            context.get(JWTTokenHandler)
+
+            movieService
+              .deleteMovieByID(movieId)
+              .single()
+              .subscribe { final Boolean success ->
+
+              redirect('/api/movies')
+            }
+          }
+        }
+      }
+
+      path('ratings') { final ObjectId movieId ->
+
+        byMethod {
+
+          get {
+
+            movieService
+              .getMovieRatings(movieId)
+              .toList()
+              .subscribe { final List<ViewableRating> ratings ->
+
+              render Jackson.json(ratings)
+            }
+          }
+
+          post {
+
+            context.get(JWTTokenHandler)
+
+            context.parse(fromJson(Rating))
+              .observe()
+              .flatMap({ final Rating rating ->
+
+              final Range<Integer> acceptableRatingRange = Range.closed(apiConfig.ratingLowerBound, apiConfig.ratingUpperBound)
+              if (!acceptableRatingRange.contains(rating.rating)) {
+
+                throw new IllegalArgumentException("A range must be between ${apiConfig.ratingLowerBound} and ${apiConfig.ratingUpperBound}")
+              }
+
+              rating.movieId = movieId
+              rating.userId = context.get(User).id
+
+              movieService.rateMovie(rating)
+            } as Func1)
+              .subscribe { final Rating rating ->
+
+              redirect("/api/movie/${rating.movieId.toString()}")
+            }
           }
         }
       }
