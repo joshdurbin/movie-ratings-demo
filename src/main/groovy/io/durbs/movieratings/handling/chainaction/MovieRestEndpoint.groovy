@@ -38,6 +38,12 @@ class MovieRestEndpoint extends GroovyChainAction {
   @Override
   void execute() throws Exception {
 
+    // security
+    onlyIf({
+      final Context context ->
+        !context.getRequest().getMethod().isGet()
+    }, JWTTokenHandler)
+
     get('movies/search') {
 
       final String queryTerm = request.queryParams.get('q', '')
@@ -70,8 +76,6 @@ class MovieRestEndpoint extends GroovyChainAction {
 
         post {
 
-          context.get(JWTTokenHandler)
-
           context.parse(fromJson(Movie))
             .observe()
             .flatMap({ final Movie movie ->
@@ -90,12 +94,6 @@ class MovieRestEndpoint extends GroovyChainAction {
 
       // ensure object ids are valid
       all(ObjectIDPathTokenExtractingHandler)
-
-      // security
-      onlyIf({
-        final Context context ->
-          !context.getRequest().getMethod().isGet()
-      }, JWTTokenHandler)
 
       path { final ObjectId movieId ->
 
