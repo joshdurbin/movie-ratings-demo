@@ -5,6 +5,8 @@ import com.google.inject.Singleton
 import com.lambdaworks.redis.SetArgs
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands
 import com.mongodb.DBCollection
+import com.mongodb.client.model.CountOptions
+import com.mongodb.client.model.Projections
 import com.mongodb.client.model.Updates
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.rx.client.MongoDatabase
@@ -79,7 +81,32 @@ class MovieService {
     )
   } as Func1
 
+  Observable<Long> getTotalMovieCount(final Bson queryFilter) {
+
+    mongoDatabase.getCollection(MovieCodec.COLLETION_NAME)
+      .count(queryFilter, new CountOptions())
+  }
+
+  Observable<Boolean> movieExists(final ObjectId objectId) {
+
+    mongoDatabase.getCollection(MovieCodec.COLLETION_NAME)
+      .find(eq(DBCollection.ID_FIELD_NAME, objectId))
+      .projection(Projections.include(DBCollection.ID_FIELD_NAME))
+      .toObservable()
+      .isEmpty()
+      .map({ final Boolean movieDoesNotExist -> !movieDoesNotExist })
+      .bindExec()
+  }
+
   Observable<Movie> getMovie(final ObjectId objectId) {
+
+    mongoDatabase.getCollection(MovieCodec.COLLETION_NAME, Movie)
+      .find(eq(DBCollection.ID_FIELD_NAME, objectId))
+      .toObservable()
+      .bindExec()
+  }
+
+  Observable<RatedMovie> getRatedMovie(final ObjectId objectId) {
 
     mongoDatabase.getCollection(MovieCodec.COLLETION_NAME, Movie)
       .find(eq(DBCollection.ID_FIELD_NAME, objectId))

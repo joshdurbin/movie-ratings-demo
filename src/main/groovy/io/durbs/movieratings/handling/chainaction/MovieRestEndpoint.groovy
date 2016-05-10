@@ -1,4 +1,4 @@
-package io.durbs.movieratings.handling
+package io.durbs.movieratings.handling.chainaction
 
 import com.google.common.collect.Range
 import com.google.inject.Inject
@@ -6,7 +6,8 @@ import com.google.inject.Singleton
 import groovy.util.logging.Slf4j
 import io.durbs.movieratings.PaginationSupport
 import io.durbs.movieratings.config.APIConfig
-import io.durbs.movieratings.handling.auth.JWTTokenHandler
+import io.durbs.movieratings.handling.handler.JWTTokenHandler
+import io.durbs.movieratings.handling.handler.ObjectIDPathTokenExtractingHandler
 import io.durbs.movieratings.model.persistent.Movie
 import io.durbs.movieratings.model.persistent.RatedMovie
 import io.durbs.movieratings.model.persistent.Rating
@@ -16,6 +17,7 @@ import io.durbs.movieratings.services.MovieService
 import org.bson.Document
 import org.bson.types.ObjectId
 import ratpack.groovy.handling.GroovyChainAction
+import ratpack.handling.Context
 import ratpack.jackson.Jackson
 import rx.functions.Func1
 
@@ -86,19 +88,14 @@ class MovieRestEndpoint extends GroovyChainAction {
 
     prefix('movies/:id') {
 
-      all {
+      // ensure object ids are valid
+      all(ObjectIDPathTokenExtractingHandler)
 
-        final String movieId = context.pathTokens.get('id')
-
-        if (ObjectId.isValid(movieId)) {
-
-          next(single(new ObjectId(movieId)))
-        } else {
-
-          log.debug("Request path does not contain a valid ObjectId '${movieId}'")
-          context.clientError(404)
-        }
-      }
+      // security
+      onlyIf({
+        final Context context ->
+          !context.getRequest().getMethod().isGet()
+      }, JWTTokenHandler)
 
       path { final ObjectId movieId ->
 
@@ -107,21 +104,15 @@ class MovieRestEndpoint extends GroovyChainAction {
           get {
 
             movieService
-              .getMovie(movieId)
+              .getRatedMovie(movieId)
               .single()
-              .doOnError({
-
-              context.clientError(404)
-            })
-              .subscribe { final Movie movie ->
+              .subscribe { final RatedMovie movie ->
 
               render Jackson.json(movie)
             }
           }
 
           put {
-
-            context.get(JWTTokenHandler)
 
             context.parse(fromJson(Movie))
               .observe()
@@ -133,8 +124,6 @@ class MovieRestEndpoint extends GroovyChainAction {
           }
 
           delete {
-
-            context.get(JWTTokenHandler)
 
             movieService
               .deleteMovieByID(movieId)
@@ -163,8 +152,6 @@ class MovieRestEndpoint extends GroovyChainAction {
           }
 
           post {
-
-            context.get(JWTTokenHandler)
 
             context.parse(fromJson(Rating))
               .observe()

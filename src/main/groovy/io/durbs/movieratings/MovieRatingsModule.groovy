@@ -36,10 +36,11 @@ import io.durbs.movieratings.config.APIConfig
 import io.durbs.movieratings.config.MongoConfig
 import io.durbs.movieratings.config.RedisConfig
 import io.durbs.movieratings.config.SecurityConfig
-import io.durbs.movieratings.handling.MovieRestEndpoint
-import io.durbs.movieratings.handling.auth.JWTTokenHandler
-import io.durbs.movieratings.handling.auth.RegistrationHandler
-import io.durbs.movieratings.handling.auth.LoginHandler
+import io.durbs.movieratings.handling.chainaction.MovieRestEndpoint
+import io.durbs.movieratings.handling.handler.JWTTokenHandler
+import io.durbs.movieratings.handling.handler.ObjectIDPathTokenExtractingHandler
+import io.durbs.movieratings.handling.handler.RegistrationHandler
+import io.durbs.movieratings.handling.handler.LoginHandler
 import io.durbs.movieratings.model.persistent.RatedMovie
 import io.durbs.movieratings.model.persistent.User
 import io.durbs.movieratings.services.AuthenticationService
@@ -69,6 +70,7 @@ class MovieRatingsModule extends AbstractModule {
     // handlers
     bind(JWTTokenHandler)
     bind(LoginHandler)
+    bind(ObjectIDPathTokenExtractingHandler)
     bind(RegistrationHandler)
 
     // chain

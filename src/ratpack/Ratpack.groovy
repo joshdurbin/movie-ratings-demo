@@ -1,7 +1,7 @@
 import io.durbs.movieratings.MovieRatingsModule
-import io.durbs.movieratings.handling.MovieRestEndpoint
-import io.durbs.movieratings.handling.auth.RegistrationHandler
-import io.durbs.movieratings.handling.auth.LoginHandler
+import io.durbs.movieratings.handling.chainaction.MovieRestEndpoint
+import io.durbs.movieratings.handling.handler.RegistrationHandler
+import io.durbs.movieratings.handling.handler.LoginHandler
 import ratpack.config.ConfigData
 import ratpack.rx.RxRatpack
 

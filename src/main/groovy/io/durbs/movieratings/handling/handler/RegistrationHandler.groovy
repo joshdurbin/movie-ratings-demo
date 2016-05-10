@@ -1,4 +1,4 @@
-package io.durbs.movieratings.handling.auth
+package io.durbs.movieratings.handling.handler
 
 import com.google.inject.Inject
 import com.google.inject.Singleton

@@ -1,4 +1,4 @@
-package io.durbs.movieratings.handling.auth
+package io.durbs.movieratings.handling.handler
 
 import com.google.common.net.HttpHeaders
 import com.google.inject.Inject
