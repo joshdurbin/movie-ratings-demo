@@ -26,9 +26,6 @@ ratpack {
 
     post('register', RegistrationHandler)
     post('login', LoginHandler)
-    prefix('api') {
-
-      all chain(MovieRestEndpoint)
-    }
+    prefix('api', MovieRestEndpoint)
   }
 }
