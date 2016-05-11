@@ -7,8 +7,10 @@ import com.lambdaworks.redis.api.rx.RedisReactiveCommands
 import com.mongodb.DBCollection
 import com.mongodb.client.model.CountOptions
 import com.mongodb.client.model.Projections
+import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.model.Updates
 import com.mongodb.client.result.DeleteResult
+import com.mongodb.client.result.UpdateResult
 import com.mongodb.rx.client.MongoDatabase
 import com.mongodb.rx.client.Success
 import groovy.transform.CompileStatic
@@ -108,9 +110,7 @@ class MovieService {
 
   Observable<RatedMovie> getRatedMovie(final ObjectId objectId) {
 
-    mongoDatabase.getCollection(MovieCodec.COLLETION_NAME, Movie)
-      .find(eq(DBCollection.ID_FIELD_NAME, objectId))
-      .toObservable()
+    getMovie(objectId)
       .flatMap(MOVIE_TO_RATED_MOVIE)
       .bindExec()
   }
@@ -131,6 +131,17 @@ class MovieService {
         })
       } as Func1)
       .bindExec()
+  }
+
+  Observable<UpdateResult> updateMovie(final Movie movie) {
+
+    mongoDatabase.getCollection(MovieCodec.COLLETION_NAME, Movie)
+      .updateOne(eq(DBCollection.ID_FIELD_NAME, movie.id), Updates.combine(
+        Updates.set(MovieCodec.NAME_PROPERTY, movie.name),
+        Updates.set(MovieCodec.DESCRIPTION_PROPERTY, movie.name),
+        Updates.set(MovieCodec.IMAGE_URI_PROPERTY, movie.imageURI)
+    ))
+    .bindExec()
   }
 
   Observable<String> createMovie(final Movie movie) {

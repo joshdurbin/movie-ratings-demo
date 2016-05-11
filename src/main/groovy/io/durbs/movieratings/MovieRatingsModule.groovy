@@ -37,8 +37,9 @@ import io.durbs.movieratings.config.MongoConfig
 import io.durbs.movieratings.config.RedisConfig
 import io.durbs.movieratings.config.SecurityConfig
 import io.durbs.movieratings.handling.chainaction.MovieRestEndpoint
+import io.durbs.movieratings.handling.handler.ErrorHandler
 import io.durbs.movieratings.handling.handler.JWTTokenHandler
-import io.durbs.movieratings.handling.handler.ObjectIDPathTokenExtractingHandler
+import io.durbs.movieratings.handling.handler.MovieIDExtractionAndVerificationHandler
 import io.durbs.movieratings.handling.handler.RegistrationHandler
 import io.durbs.movieratings.handling.handler.LoginHandler
 import io.durbs.movieratings.model.persistent.RatedMovie
@@ -50,6 +51,7 @@ import org.bson.codecs.configuration.CodecRegistries
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.types.ObjectId
 import ratpack.config.ConfigData
+import ratpack.error.ServerErrorHandler
 import ratpack.service.Service
 import ratpack.service.StartEvent
 import ratpack.service.StopEvent
@@ -70,8 +72,9 @@ class MovieRatingsModule extends AbstractModule {
     // handlers
     bind(JWTTokenHandler)
     bind(LoginHandler)
-    bind(ObjectIDPathTokenExtractingHandler)
+    bind(MovieIDExtractionAndVerificationHandler)
     bind(RegistrationHandler)
+    bind(ServerErrorHandler).to(ErrorHandler)
 
     // chain
     bind(MovieRestEndpoint)

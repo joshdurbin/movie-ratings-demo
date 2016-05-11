@@ -3,11 +3,12 @@ package io.durbs.movieratings.handling.chainaction
 import com.google.common.collect.Range
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import com.mongodb.client.result.UpdateResult
 import groovy.util.logging.Slf4j
 import io.durbs.movieratings.PaginationSupport
 import io.durbs.movieratings.config.APIConfig
 import io.durbs.movieratings.handling.handler.JWTTokenHandler
-import io.durbs.movieratings.handling.handler.ObjectIDPathTokenExtractingHandler
+import io.durbs.movieratings.handling.handler.MovieIDExtractionAndVerificationHandler
 import io.durbs.movieratings.model.persistent.Movie
 import io.durbs.movieratings.model.persistent.RatedMovie
 import io.durbs.movieratings.model.persistent.Rating
@@ -38,7 +39,6 @@ class MovieRestEndpoint extends GroovyChainAction {
   @Override
   void execute() throws Exception {
 
-    // security
     onlyIf({
       final Context context ->
         !context.getRequest().getMethod().isGet()
@@ -92,8 +92,7 @@ class MovieRestEndpoint extends GroovyChainAction {
 
     prefix('movies/:id') {
 
-      // ensure object ids are valid
-      all(ObjectIDPathTokenExtractingHandler)
+      all(MovieIDExtractionAndVerificationHandler)
 
       path { final ObjectId movieId ->
 
@@ -116,8 +115,12 @@ class MovieRestEndpoint extends GroovyChainAction {
               .observe()
               .flatMap({ final Movie movie ->
 
-              render(Jackson.json('things'))
-            })
+              movieService.updateMovie(movie)
+            } as Func1)
+              .subscribe { final UpdateResult updateResult ->
+
+              redirect("/api/movie/${movieId.toString()}")
+            }
 
           }
 

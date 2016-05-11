@@ -13,7 +13,7 @@ import ratpack.registry.Registry
 @Singleton
 @Slf4j
 @CompileStatic
-class ObjectIDPathTokenExtractingHandler extends GroovyHandler {
+class MovieIDExtractionAndVerificationHandler extends GroovyHandler {
 
   @Inject
   MovieService movieService
