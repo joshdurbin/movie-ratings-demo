@@ -1,8 +1,8 @@
 package io.durbs.movieratings.codec.redis
 
 import com.esotericsoftware.kryo.Kryo
-import com.esotericsoftware.kryo.io.Input
-import com.esotericsoftware.kryo.io.Output
+import com.esotericsoftware.kryo.io.UnsafeInput
+import com.esotericsoftware.kryo.io.UnsafeOutput
 import com.esotericsoftware.kryo.pool.KryoCallback
 import com.esotericsoftware.kryo.pool.KryoPool
 import com.google.common.base.Charsets
@@ -39,7 +39,7 @@ class RatedMovieCodec implements RedisCodec<String, RatedMovie> {
 
       @Override
       RatedMovie execute(Kryo kryo) {
-        kryo.readObject(new Input(bytes), RatedMovie)
+        kryo.readObject(new UnsafeInput(bytes), RatedMovie)
       }
     })
   }
@@ -53,7 +53,7 @@ class RatedMovieCodec implements RedisCodec<String, RatedMovie> {
   @Override
   ByteBuffer encodeValue(final RatedMovie ratedMovie) {
 
-    final Output output = new Output(new ByteArrayOutputStream(), DEFAULT_BUFFER)
+    final UnsafeOutput output = new UnsafeOutput(new ByteArrayOutputStream(), DEFAULT_BUFFER)
 
     final Kryo kryo = kryoPool.borrow()
     kryo.writeObject(output, ratedMovie)
