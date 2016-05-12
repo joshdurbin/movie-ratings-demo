@@ -40,7 +40,6 @@ class LoginHandler extends GroovyHandler {
 
       if (jwt != Constants.PLACE_HOLDER_INVALID_JWT_TOKEN) {
 
-        context.response.headers.add(HttpHeaders.AUTHORIZATION, "${Constants.BEARER_AUTHORIZATION_SCHEMA_KEY} ${jwt}")
         context.render(Jackson.json(jwt))
       } else {
 
