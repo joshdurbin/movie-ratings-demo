@@ -19,5 +19,5 @@ class Constants {
 
   public static final String PLACE_HOLDER_INVALID_JWT_TOKEN = '--'
 
-  public static final Integer DEFAULT_RATING = 0
+  public static final Integer DEFAULT_RATING = -1
 }

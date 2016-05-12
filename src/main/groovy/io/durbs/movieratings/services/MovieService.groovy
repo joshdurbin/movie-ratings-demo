@@ -7,7 +7,6 @@ import com.lambdaworks.redis.api.rx.RedisReactiveCommands
 import com.mongodb.DBCollection
 import com.mongodb.client.model.CountOptions
 import com.mongodb.client.model.Projections
-import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.model.Updates
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
@@ -16,7 +15,6 @@ import com.mongodb.rx.client.Success
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.durbs.movieratings.Constants
-import io.durbs.movieratings.PaginationSupport
 import io.durbs.movieratings.Util
 import io.durbs.movieratings.codec.mongo.MovieCodec
 import io.durbs.movieratings.codec.mongo.RatingCodec
@@ -73,7 +71,7 @@ class MovieService {
           name: movie.name,
           description: movie.description,
           imageURI: movie.imageURI,
-          rating: rating
+          rating: rating != Constants.DEFAULT_RATING ? rating : null
         )
       })
         .doOnNext { final RatedMovie ratedMovie ->
@@ -196,13 +194,11 @@ class MovieService {
     .bindExec()
   }
 
-  Observable<RatedMovie> getAllMovies(final Bson queryFilter, final PaginationSupport paginationSupport) {
+  Observable<RatedMovie> getAllMovies(final Bson queryFilter) {
 
     mongoDatabase.getCollection(MovieCodec.COLLETION_NAME, Movie)
       .find()
       .filter(queryFilter)
-      .limit(paginationSupport.pageSize)
-      .skip(paginationSupport.offSet)
       .toObservable()
       .flatMap(MOVIE_TO_RATED_MOVIE)
     .bindExec()

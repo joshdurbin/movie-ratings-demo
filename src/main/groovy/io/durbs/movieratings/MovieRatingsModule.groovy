@@ -3,6 +3,7 @@ package io.durbs.movieratings
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.pool.KryoFactory
 import com.esotericsoftware.kryo.pool.KryoPool
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.google.inject.AbstractModule
@@ -89,7 +90,9 @@ class MovieRatingsModule extends AbstractModule {
   @Singleton
   ObjectMapper provideCustomObjectMapper() {
 
-    new ObjectMapper().registerModule(new SimpleModule().addSerializer(ObjectId, new ObjectIDSerializer()))
+    new ObjectMapper()
+      .registerModule(new SimpleModule().addSerializer(ObjectId, new ObjectIDSerializer()))
+      .setSerializationInclusion(JsonInclude.Include.NON_NULL)
   }
 
   @Provides

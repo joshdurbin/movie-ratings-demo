@@ -2,11 +2,11 @@ aws:
   accessKey:
   secretKey:
 redis:
-  uri: redis://localhost
+  uri: redis://localhost:32768
   movieRatingsCacheTTLInSeconds: 3600
 mongo:
   db: movie-ratings
-  uri: mongodb://localhost/movie-ratings?w=1
+  uri: mongodb://localhost:32769/movie-ratings?w=1
 security:
   jwtSigningKey: 23214F888132773A753654BC8D4E7FBB2670954D8C599568FB77F86C49CA6F5C
   jwtTokenTTLInHours: 336

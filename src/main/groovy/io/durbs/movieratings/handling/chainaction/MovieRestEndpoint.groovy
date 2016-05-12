@@ -5,7 +5,6 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.mongodb.client.result.UpdateResult
 import groovy.util.logging.Slf4j
-import io.durbs.movieratings.PaginationSupport
 import io.durbs.movieratings.config.APIConfig
 import io.durbs.movieratings.handling.handler.JWTTokenHandler
 import io.durbs.movieratings.handling.handler.MovieIDExtractionAndVerificationHandler
@@ -49,7 +48,7 @@ class MovieRestEndpoint extends GroovyChainAction {
       final String queryTerm = request.queryParams.get('q', '')
 
       movieService
-        .getAllMovies(text(queryTerm), new PaginationSupport(context, apiConfig))
+        .getAllMovies(text(queryTerm))
         .toList()
         .defaultIfEmpty([])
         .subscribe { final List<RatedMovie> movies ->
@@ -65,7 +64,7 @@ class MovieRestEndpoint extends GroovyChainAction {
         get {
 
           movieService
-            .getAllMovies(new Document(), new PaginationSupport(context, apiConfig))
+            .getAllMovies(new Document())
             .toList()
             .defaultIfEmpty([])
             .subscribe { final List<RatedMovie> movies ->
