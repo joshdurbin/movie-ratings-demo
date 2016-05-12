@@ -10,7 +10,7 @@ The list of unrestricted endpoints includes:
 
 * Registration with a `POST` to `/register` with a JSON payload of `{'username':'', 'password':'', 'emailAddress':'', 'name':''}` and, if successful, returns an Authentication Header with the Bearer schema containing a JWT.
 * Login with a `POST` to `/login` with a JSON payload of `{'username':'', 'password':''}` and, if successful, returns an Authentication Header with the Bearer schema containing a JWT.
-* Get All Movies with a `GET` to `/api/movies`
+* Get All Movies with a `GET` to [`/api/movies`](https://movie-ratings-demo.herokuapp.com/api/movies)
 * Get a particular Movie with a `GET` to `/api/movies/$id`
 * Search for Movies with a `GET` to `/api/movies/search` with a query parameter `q` containing the search terms
 * Get the individual ratings, comments, and user names for a Movie with a `GET` to `/api/movie/$id/ratings`
