@@ -68,24 +68,21 @@ class AuthenticationService {
    * @param emailAddress
    * @return JWT token or error
    */
-  Observable<String> createAccount(final String username, final String password, final String emailAddress) {
+  Observable<String> createAccount(final User userToInsert) {
 
-    final User userToInsert = new User(
-      username: username,
-      password: PasswordFactory.create().hash(password),
-      emailAddress: emailAddress)
+    userToInsert.setPassword(PasswordFactory.create().hash(userToInsert.password))
 
     final Observable<User> userInsertionObservable = mongoDatabase.getCollection(UserCodec.COLLETION_NAME, User)
       .insertOne(userToInsert)
       .flatMap({ final Success success ->
 
       mongoDatabase.getCollection(UserCodec.COLLETION_NAME, User)
-        .find(eq(UserCodec.USERNAME_PROPERTY, username))
+        .find(eq(UserCodec.USERNAME_PROPERTY, userToInsert.username))
         .toObservable()
       } as Func1)
 
     mongoDatabase.getCollection(UserCodec.COLLETION_NAME, User)
-      .find(eq(UserCodec.USERNAME_PROPERTY, username))
+      .find(eq(UserCodec.USERNAME_PROPERTY, userToInsert))
       .toObservable()
       .switchIfEmpty(userInsertionObservable)
       .map(USER_TO_JWT)

@@ -28,7 +28,7 @@ class RegistrationHandler extends GroovyHandler {
       .observe()
       .flatMap({ final User user ->
 
-      authenticationService.createAccount(user.username, user.password, user.emailAddress)
+      authenticationService.createAccount(user)
     } as Func1)
     .subscribe { final String jwt ->
 
