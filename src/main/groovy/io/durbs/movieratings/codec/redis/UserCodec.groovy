@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.lambdaworks.redis.codec.RedisCodec
 import groovy.transform.CompileStatic
+import io.durbs.movieratings.Constants
 import io.durbs.movieratings.model.persistent.User
 
 import java.nio.ByteBuffer
@@ -17,8 +18,6 @@ import java.nio.ByteBuffer
 @Singleton
 @CompileStatic
 class UserCodec implements RedisCodec<String, User> {
-
-  static final int DEFAULT_BUFFER = 1024 * 100
 
   @Inject
   KryoPool kryoPool
@@ -53,7 +52,7 @@ class UserCodec implements RedisCodec<String, User> {
   @Override
   ByteBuffer encodeValue(final User user) {
 
-    final UnsafeOutput output = new UnsafeOutput(new ByteArrayOutputStream(), DEFAULT_BUFFER)
+    final UnsafeOutput output = new UnsafeOutput(new ByteArrayOutputStream(), Constants.DEFAULT_KRYO_BUFFER)
 
     final Kryo kryo = kryoPool.borrow()
     kryo.writeObject(output, user)
