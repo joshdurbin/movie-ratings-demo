@@ -24,6 +24,13 @@ ratpack {
 
   handlers {
 
+    all {
+
+      response.headers.add('Access-Control-Allow-Origin', '*')
+
+      next()
+    }
+
     post('register', RegistrationHandler)
     post('login', LoginHandler)
     prefix('api', MovieRestEndpoint)
