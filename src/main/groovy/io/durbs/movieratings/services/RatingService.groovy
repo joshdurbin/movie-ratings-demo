@@ -95,18 +95,20 @@ class RatingService {
 
   Observable<ExternalRating> getExternalRating(final String imdbId) {
 
-//    externalRatingCache.get(getExternalRatingCacheKey(imdbId))
-//      .switchIfEmpty (
-//
-//      omdbService.getOMDBExternalRatingForMovieBlocking(imdbId)
-//        .doOnNext { final ExternalRating externalRating ->
-//
-//        log.info("Inserted external rating in cache as key ${getExternalRatingCacheKey(imdbId)}")
-//        externalRatingCache.set(getExternalRatingCacheKey(imdbId),
-//          externalRating,
-//          SetArgs.Builder.ex(movieRatingsConfig.externalRatingsCacheTTLInSeconds)).subscribe()
-//      })
-    Observable.just(new ExternalRating(totalImdbRatings: 0, totalRottenTomatoRatings: 0, totalRottenTomatoUserRatings: 0))
+    externalRatingCache.get(getExternalRatingCacheKey(imdbId))
+      .switchIfEmpty (
+
+      Observable.just(new ExternalRating(totalRottenTomatoUserRatings: 0,
+        totalRottenTomatoRatings: 0,
+        totalImdbRatings: 0))
+      //omdbService.getOMDBExternalRatingForMovie(imdbId)
+        .doOnNext { final ExternalRating externalRating ->
+
+        log.info("Inserted external rating in cache as key ${getExternalRatingCacheKey(imdbId)}")
+        externalRatingCache.set(getExternalRatingCacheKey(imdbId),
+          externalRating,
+          SetArgs.Builder.ex(movieRatingsConfig.externalRatingsCacheTTLInSeconds)).subscribe()
+      })
   }
 
   Observable<ViewableRating> getIndividualUserRatingsAndComment(final ObjectId objectId) {
@@ -121,7 +123,10 @@ class RatingService {
         .toObservable()
         .map({ final User user ->
 
-        new ViewableRating(username: user.username, usersGivenName: user.name, rating: rating.rating, comment: rating.comment)
+        new ViewableRating(username: user.username,
+          usersGivenName: user.name,
+          rating: rating.rating,
+          comment: rating.comment)
       })
     } as Func1)
     .bindExec()

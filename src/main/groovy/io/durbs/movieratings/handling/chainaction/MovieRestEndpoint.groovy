@@ -1,11 +1,9 @@
 package io.durbs.movieratings.handling.chainaction
 
-import com.google.common.collect.Range
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.mongodb.client.result.UpdateResult
 import groovy.util.logging.Slf4j
-import io.durbs.movieratings.MovieRatingsConfig
 import io.durbs.movieratings.handling.handler.JWTTokenHandler
 import io.durbs.movieratings.handling.handler.MovieIDExtractionAndVerificationHandler
 import io.durbs.movieratings.model.Movie
@@ -37,9 +35,6 @@ class MovieRestEndpoint extends GroovyChainAction {
 
   @Inject
   RatingService ratingService
-
-  @Inject
-  MovieRatingsConfig movieRatingsConfig
 
   @Inject
   OMDBService omdbService

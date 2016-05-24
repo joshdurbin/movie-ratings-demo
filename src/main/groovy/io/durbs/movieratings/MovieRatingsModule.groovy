@@ -31,12 +31,11 @@ import io.durbs.movieratings.codec.ObjectIDSerializer
 import io.durbs.movieratings.codec.mongo.MovieCodec
 import io.durbs.movieratings.codec.mongo.RatingCodec
 import io.durbs.movieratings.codec.mongo.UserCodec
+import io.durbs.movieratings.handling.chainaction.AuthEndpoint
 import io.durbs.movieratings.handling.chainaction.MovieRestEndpoint
 import io.durbs.movieratings.handling.handler.ErrorHandler
 import io.durbs.movieratings.handling.handler.JWTTokenHandler
-import io.durbs.movieratings.handling.handler.LoginHandler
 import io.durbs.movieratings.handling.handler.MovieIDExtractionAndVerificationHandler
-import io.durbs.movieratings.handling.handler.RegistrationHandler
 import io.durbs.movieratings.model.ComputedUserRating
 import io.durbs.movieratings.model.ExternalRating
 import io.durbs.movieratings.model.User
@@ -68,12 +67,11 @@ class MovieRatingsModule extends AbstractModule {
 
     // handlers
     bind(JWTTokenHandler)
-    bind(LoginHandler)
     bind(MovieIDExtractionAndVerificationHandler)
-    bind(RegistrationHandler)
     bind(ServerErrorHandler).to(ErrorHandler)
 
     // chain
+    bind(AuthEndpoint)
     bind(MovieRestEndpoint)
 
     // services

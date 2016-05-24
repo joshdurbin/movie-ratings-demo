@@ -1,7 +1,6 @@
 import io.durbs.movieratings.MovieRatingsModule
+import io.durbs.movieratings.handling.chainaction.AuthEndpoint
 import io.durbs.movieratings.handling.chainaction.MovieRestEndpoint
-import io.durbs.movieratings.handling.handler.RegistrationHandler
-import io.durbs.movieratings.handling.handler.LoginHandler
 import ratpack.config.ConfigData
 import ratpack.hystrix.HystrixModule
 import ratpack.rx.RxRatpack
@@ -20,9 +19,8 @@ ratpack {
       c.sysProps()
     })
 
-
     module MovieRatingsModule
-    module HystrixModule.newInstance().sse()
+    module HystrixModule.newInstance()
   }
 
   handlers {
@@ -35,8 +33,7 @@ ratpack {
       next()
     }
 
-    post('register', RegistrationHandler)
-    post('login', LoginHandler)
+    prefix('api/auth', AuthEndpoint)
     prefix('api', MovieRestEndpoint)
   }
 }

@@ -10,7 +10,6 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.durbs.movieratings.model.ExternalRating
 import io.durbs.movieratings.model.Movie
-import ratpack.exec.Blocking
 import ratpack.http.client.HttpClient
 import ratpack.http.client.ReceivedResponse
 import rx.Observable
@@ -102,33 +101,5 @@ class OMDBService {
         Observable.empty()
       }
     }.toObservable()
-  }
-
-  Observable<ExternalRating> getOMDBExternalRatingForMovieBlocking(final String imdbId) {
-
-    Blocking.get {
-
-      final String endpoint = "http://www.omdbapi.com/?i=${imdbId}&tomatoes=true"
-      final URL endpointURL = endpoint.toURL()
-      final BufferedReader reader = new BufferedReader(new InputStreamReader(endpointURL.openStream()))
-      final JsonSlurper slurper = new JsonSlurper()
-
-      final Object parsedObject = slurper.parse(reader)
-      final Map parsedObjectMap = parsedObject as Map
-
-      if (parsedObjectMap.get('Response') == 'True') {
-
-        final Number totalImdbRatings = NumberFormat.getInstance(Locale.US).parse(parsedObjectMap.get('imdbVotes') as String)
-
-        new ExternalRating(imdbRating: parsedObjectMap.get('imdbRating') as Double,
-          totalImdbRatings: totalImdbRatings.intValue(),
-          rottenTomatoRating: parsedObjectMap.get('tomatoRating') as Double,
-          totalRottenTomatoRatings: parsedObjectMap.get('tomatoReviews') as Integer,
-          rottenTomatoUserRating: parsedObjectMap.get('tomatoUserRating') as Double,
-          totalRottenTomatoUserRatings: parsedObjectMap.get('tomatoUserReviews') as Integer)
-      }
-    }
-    .observe()
-    .defaultIfEmpty(null)
   }
 }
