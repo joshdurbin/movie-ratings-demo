@@ -3,7 +3,7 @@ package io.durbs.movieratings.codec.mongo
 import com.mongodb.DBCollection
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import io.durbs.movieratings.model.persistent.User
+import io.durbs.movieratings.model.User
 import org.bson.BsonReader
 import org.bson.BsonString
 import org.bson.BsonValue
@@ -25,7 +25,7 @@ class UserCodec implements CollectibleCodec<User> {
   public static final String PASSWORD_PROPERTY = 'password'
   public static final String EMAIL_ADDRESS_PROPERTY = 'emailAddress'
 
-  public static final String COLLETION_NAME = 'user'
+  public static final String COLLECTION_NAME = 'user'
 
   static final Codec<Document> documentCodec = new DocumentCodec()
 

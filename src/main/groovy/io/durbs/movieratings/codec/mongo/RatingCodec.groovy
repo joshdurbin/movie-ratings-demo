@@ -3,7 +3,7 @@ package io.durbs.movieratings.codec.mongo
 import com.mongodb.DBCollection
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import io.durbs.movieratings.model.persistent.Rating
+import io.durbs.movieratings.model.Rating
 import org.bson.BsonReader
 import org.bson.BsonString
 import org.bson.BsonValue
@@ -25,7 +25,7 @@ class RatingCodec implements CollectibleCodec<Rating> {
   public static final String RATING_PROPERTY = 'rating'
   public static final String COMMENT_PROPERTY = 'comment'
 
-  public static final String COLLETION_NAME = 'rating'
+  public static final String COLLECTION_NAME = 'rating'
 
   static final Codec<Document> documentCodec = new DocumentCodec()
 

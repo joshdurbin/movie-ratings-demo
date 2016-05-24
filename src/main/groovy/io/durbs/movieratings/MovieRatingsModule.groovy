@@ -26,27 +26,24 @@ import com.mongodb.rx.client.MongoClients
 import com.mongodb.rx.client.MongoDatabase
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.durbs.movieratings.codec.KryoRedisCodec
 import io.durbs.movieratings.codec.ObjectIDSerializer
 import io.durbs.movieratings.codec.mongo.MovieCodec
 import io.durbs.movieratings.codec.mongo.RatingCodec
 import io.durbs.movieratings.codec.mongo.UserCodec
-import io.durbs.movieratings.codec.mongo.UserCodec as MongoUserCodec
-import io.durbs.movieratings.codec.redis.RatedMovieCodec
-import io.durbs.movieratings.codec.redis.UserCodec as RedisUserCodec
-import io.durbs.movieratings.config.APIConfig
-import io.durbs.movieratings.config.MongoConfig
-import io.durbs.movieratings.config.RedisConfig
-import io.durbs.movieratings.config.SecurityConfig
 import io.durbs.movieratings.handling.chainaction.MovieRestEndpoint
 import io.durbs.movieratings.handling.handler.ErrorHandler
 import io.durbs.movieratings.handling.handler.JWTTokenHandler
+import io.durbs.movieratings.handling.handler.LoginHandler
 import io.durbs.movieratings.handling.handler.MovieIDExtractionAndVerificationHandler
 import io.durbs.movieratings.handling.handler.RegistrationHandler
-import io.durbs.movieratings.handling.handler.LoginHandler
-import io.durbs.movieratings.model.persistent.RatedMovie
-import io.durbs.movieratings.model.persistent.User
+import io.durbs.movieratings.model.ComputedUserRating
+import io.durbs.movieratings.model.ExternalRating
+import io.durbs.movieratings.model.User
 import io.durbs.movieratings.services.AuthenticationService
 import io.durbs.movieratings.services.MovieService
+import io.durbs.movieratings.services.OMDBService
+import io.durbs.movieratings.services.RatingService
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistries
 import org.bson.codecs.configuration.CodecRegistry
@@ -59,16 +56,15 @@ import ratpack.service.StopEvent
 import rx.Observable
 import rx.functions.Func3
 
+import javax.validation.Validation
+import javax.validation.Validator
+
 @CompileStatic
 @Slf4j
 class MovieRatingsModule extends AbstractModule {
 
   @Override
   protected void configure() {
-
-    // redis codecs
-    bind(RatedMovieCodec)
-    bind(RedisUserCodec)
 
     // handlers
     bind(JWTTokenHandler)
@@ -83,7 +79,14 @@ class MovieRatingsModule extends AbstractModule {
     // services
     bind(AuthenticationService)
     bind(MovieService)
+    bind(OMDBService)
+    bind(RatingService)
+  }
 
+  @Provides
+  @Singleton
+  Validator provideValidator() {
+    Validation.buildDefaultValidatorFactory().validator
   }
 
   @Provides
@@ -111,61 +114,50 @@ class MovieRatingsModule extends AbstractModule {
 
   @Provides
   @Singleton
-  APIConfig provideAPIConfig(final ConfigData configData) {
+  MovieRatingsConfig provideAPIConfig(final ConfigData configData) {
 
-    configData.get(APIConfig.CONFIG_ROOT, APIConfig)
-  }
-
-  @Provides
-  @Singleton
-  MongoConfig provideMongoConfig(final ConfigData configData) {
-
-    configData.get(MongoConfig.CONFIG_ROOT, MongoConfig)
-  }
-
-  @Provides
-  @Singleton
-  RedisConfig provideRedisConfig(final ConfigData configData) {
-
-    configData.get(RedisConfig.CONFIG_ROOT, RedisConfig)
-  }
-
-  @Provides
-  @Singleton
-  SecurityConfig provideSecurityConfig(final ConfigData configData) {
-
-    configData.get(SecurityConfig.CONFIG_ROOT, SecurityConfig)
+    configData.get(MovieRatingsConfig)
   }
 
   @Provides
   @Singleton
   RedisReactiveCommands<String, User> userRedisCommands(
-    final RedisConfig redisConfig,
-    final RedisUserCodec userCodec) {
+    final MovieRatingsConfig config,
+    final KryoPool kryoPool) {
 
-    final RedisClient redisClient = RedisClient.create(redisConfig.uri)
-    redisClient.connect(userCodec).reactive()
+    final RedisClient redisClient = RedisClient.create(config.redisURI)
+    redisClient.connect(new KryoRedisCodec<User>(User, kryoPool)).reactive()
   }
 
   @Provides
   @Singleton
-  RedisReactiveCommands<String, RatedMovie> ratedMovieRedisCommands(
-    final RedisConfig redisConfig,
-    final RatedMovieCodec ratedMovieCodec) {
+  RedisReactiveCommands<String, ComputedUserRating> computedRatingCommands(
+    final MovieRatingsConfig config,
+    final KryoPool kryoPool) {
 
-    final RedisClient redisClient = RedisClient.create(redisConfig.uri)
-    redisClient.connect(ratedMovieCodec).reactive()
+    final RedisClient redisClient = RedisClient.create(config.redisURI)
+    redisClient.connect(new KryoRedisCodec<ComputedUserRating>(ComputedUserRating, kryoPool)).reactive()
   }
 
   @Provides
   @Singleton
-  MongoDatabase provideMongoDatabase(final MongoConfig mongoConfig) {
+  RedisReactiveCommands<String, ExternalRating> externalRatingCommands(
+    final MovieRatingsConfig config,
+    final KryoPool kryoPool) {
 
-    final ConnectionString connectionString = new ConnectionString(mongoConfig.uri)
+    final RedisClient redisClient = RedisClient.create(config.redisURI)
+    redisClient.connect(new KryoRedisCodec<ExternalRating>(ExternalRating, kryoPool)).reactive()
+  }
+
+  @Provides
+  @Singleton
+  MongoDatabase provideMongoDatabase(final MovieRatingsConfig config) {
+
+    final ConnectionString connectionString = new ConnectionString(config.mongoURI)
 
     final CodecRegistry codecRegistry = CodecRegistries.fromRegistries(
       MongoClient.getDefaultCodecRegistry(),
-      CodecRegistries.fromCodecs(new MovieCodec(), new RatingCodec(), new MongoUserCodec()))
+      CodecRegistries.fromCodecs(new MovieCodec(), new RatingCodec(), new UserCodec()))
 
     MongoClientSettings.Builder mongoClientSettingsBuidler = MongoClientSettings.builder()
       .codecRegistry(codecRegistry)
@@ -179,32 +171,35 @@ class MovieRatingsModule extends AbstractModule {
       mongoClientSettingsBuidler.streamFactoryFactory(new NettyStreamFactoryFactory())
     }
 
-    MongoClients.create(mongoClientSettingsBuidler.build()).getDatabase(mongoConfig.db)
+    MongoClients.create(mongoClientSettingsBuidler.build()).getDatabase(config.mongoDb)
   }
 
   @Provides
   @Singleton
-  public Service setup(final MongoDatabase mongoDatabase,
-                       final RedisReactiveCommands<String, User> userRedisCommands,
-                       final RedisReactiveCommands<String, RatedMovie> ratedMovieRedisCommands) {
+  public Service establishMongoIndexes(final MongoDatabase mongoDatabase,
+                                       final RedisReactiveCommands<String, ComputedUserRating> computedRatingCommands,
+                                       final RedisReactiveCommands<String, ExternalRating> externalRatingsCommands,
+                                       final RedisReactiveCommands<String, User> userRatingsCommand) {
 
     new Service() {
 
       @Override
       void onStart(StartEvent event) throws Exception {
 
-        final Observable<String> userIndexes = mongoDatabase.getCollection(UserCodec.COLLETION_NAME)
-          .createIndexes([new IndexModel(new Document(UserCodec.USERNAME_PROPERTY, 1))])
+        final Observable<String> userIndexes = mongoDatabase.getCollection(UserCodec.COLLECTION_NAME)
+          .createIndexes([new IndexModel(new Document(UserCodec.USERNAME_PROPERTY, 1), new IndexOptions(unique: true))])
 
-        final Observable<String> movieIndexes = mongoDatabase.getCollection(MovieCodec.COLLETION_NAME)
-          .createIndexes([new IndexModel(new Document('$**', 'text'), new IndexOptions(weights: new Document().append(MovieCodec.NAME_PROPERTY, 1)))])
+        final Observable<String> movieIndexes = mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME)
+          .createIndexes([
+          new IndexModel(new Document('$**', 'text'), new IndexOptions(weights: new Document().append(MovieCodec.NAME_PROPERTY, 1))),
+          new IndexModel(new Document(MovieCodec.IMDB_ID_PROPERTY, 1), new IndexOptions(unique: true))])
 
-        final Observable<String> ratingIndexes = mongoDatabase.getCollection(RatingCodec.COLLETION_NAME)
+        final Observable<String> ratingIndexes = mongoDatabase.getCollection(RatingCodec.COLLECTION_NAME)
           .createIndexes([new IndexModel(new Document(RatingCodec.MOVIE_ID_PROPERTY, 1).append(RatingCodec.USER_ID_PROPERTY, 1), new IndexOptions(unique: true))])
 
         Observable.zip(userIndexes, movieIndexes, ratingIndexes, { String userCollectionIndexNames,
-          String movieCollectionIndexNames,
-          String ratingCollectionIndexNames ->
+                                                                   String movieCollectionIndexNames,
+                                                                   String ratingCollectionIndexNames ->
 
         } as Func3).bindExec().subscribe()
       }
@@ -212,8 +207,9 @@ class MovieRatingsModule extends AbstractModule {
       @Override
       void onStop(StopEvent stopEvent) throws Exception {
 
-        userRedisCommands.close()
-        ratedMovieRedisCommands.close()
+        computedRatingCommands.close()
+        externalRatingsCommands.close()
+        userRatingsCommand.close()
       }
     }
   }

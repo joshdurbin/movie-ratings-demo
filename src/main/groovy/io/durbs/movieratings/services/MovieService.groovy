@@ -2,38 +2,26 @@ package io.durbs.movieratings.services
 
 import com.google.inject.Inject
 import com.google.inject.Singleton
-import com.lambdaworks.redis.SetArgs
-import com.lambdaworks.redis.api.rx.RedisReactiveCommands
 import com.mongodb.DBCollection
-import com.mongodb.client.model.CountOptions
 import com.mongodb.client.model.Projections
 import com.mongodb.client.model.Updates
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.rx.client.MongoDatabase
-import com.mongodb.rx.client.Success
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import io.durbs.movieratings.Constants
-import io.durbs.movieratings.Util
 import io.durbs.movieratings.codec.mongo.MovieCodec
 import io.durbs.movieratings.codec.mongo.RatingCodec
-import io.durbs.movieratings.codec.mongo.UserCodec
-import io.durbs.movieratings.config.RedisConfig
-import io.durbs.movieratings.model.persistent.Movie
-import io.durbs.movieratings.model.persistent.RatedMovie
-import io.durbs.movieratings.model.persistent.Rating
-import io.durbs.movieratings.model.persistent.User
-import io.durbs.movieratings.model.convenience.ViewableRating
+import io.durbs.movieratings.model.ComputedUserRating
+import io.durbs.movieratings.model.ExternalRating
+import io.durbs.movieratings.model.Movie
+import io.durbs.movieratings.model.Rating
 import org.bson.conversions.Bson
 import org.bson.types.ObjectId
 import rx.Observable
-import rx.functions.Action1
-import rx.functions.Func1
+import rx.functions.Func2
 import rx.functions.Func3
-import rx.observables.MathObservable
 
-import static com.mongodb.client.model.Filters.and
 import static com.mongodb.client.model.Filters.eq
 
 @CompileStatic
@@ -45,51 +33,11 @@ class MovieService {
   MongoDatabase mongoDatabase
 
   @Inject
-  RedisReactiveCommands<String, RatedMovie> ratedMovieRedisReactiveCommands
-
-  @Inject
-  RedisConfig redisConfig
-
-  private final Func1 MOVIE_TO_RATED_MOVIE = { final Movie movie ->
-
-    ratedMovieRedisReactiveCommands.get(movie.id.toString())
-      .switchIfEmpty(
-
-      MathObservable.averageInteger(mongoDatabase.getCollection(RatingCodec.COLLETION_NAME, Rating)
-        .find(eq(RatingCodec.MOVIE_ID_PROPERTY, movie.id))
-        .toObservable()
-        .map({ final Rating rating ->
-
-        rating.rating
-      } as Func1)
-        .defaultIfEmpty(Constants.DEFAULT_RATING))
-        .map({ final Double rating ->
-
-        new RatedMovie(
-
-          id: movie.id,
-          name: movie.name,
-          description: movie.description,
-          imageURI: movie.imageURI,
-          rating: rating != Constants.DEFAULT_RATING ? rating : null
-        )
-      })
-        .doOnNext { final RatedMovie ratedMovie ->
-
-        ratedMovieRedisReactiveCommands.set(Util.getRedisMovieKey(ratedMovie), ratedMovie, SetArgs.Builder.ex(redisConfig.movieRatingsCacheTTLInSeconds)).subscribe()
-      }
-    )
-  } as Func1
-
-  Observable<Long> getTotalMovieCount(final Bson queryFilter) {
-
-    mongoDatabase.getCollection(MovieCodec.COLLETION_NAME)
-      .count(queryFilter, new CountOptions())
-  }
+  RatingService ratingService
 
   Observable<Boolean> movieExists(final ObjectId objectId) {
 
-    mongoDatabase.getCollection(MovieCodec.COLLETION_NAME)
+    mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME)
       .find(eq(DBCollection.ID_FIELD_NAME, objectId))
       .projection(Projections.include(DBCollection.ID_FIELD_NAME))
       .toObservable()
@@ -100,107 +48,74 @@ class MovieService {
 
   Observable<Movie> getMovie(final ObjectId objectId) {
 
-    mongoDatabase.getCollection(MovieCodec.COLLETION_NAME, Movie)
+    mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME, Movie)
       .find(eq(DBCollection.ID_FIELD_NAME, objectId))
       .toObservable()
-      .bindExec()
-  }
+      .flatMap({ final Movie movie ->
 
-  Observable<RatedMovie> getRatedMovie(final ObjectId objectId) {
+      Observable.zip(ratingService.getComputedUserRating(movie.id),
+        ratingService.getExternalRating(movie.imdbId),
+        { final ComputedUserRating computedUserRating,
+          final ExternalRating externalRating ->
 
-    getMovie(objectId)
-      .flatMap(MOVIE_TO_RATED_MOVIE)
-      .bindExec()
-  }
+          movie.computedRating = computedUserRating
+          movie.externalRating = externalRating
 
-  Observable<ViewableRating> getMovieRatings(final ObjectId objectId) {
-
-    mongoDatabase.getCollection(RatingCodec.COLLETION_NAME, Rating)
-      .find(eq(RatingCodec.MOVIE_ID_PROPERTY, objectId))
-      .toObservable()
-      .flatMap({ final Rating rating ->
-
-        mongoDatabase.getCollection(UserCodec.COLLETION_NAME, User)
-          .find(eq(DBCollection.ID_FIELD_NAME, rating.userId))
-          .toObservable()
-          .map({ final User user ->
-
-          new ViewableRating(username: user.username, usersGivenName: user.name, rating: rating.rating, comment: rating.comment)
-        })
-      } as Func1)
-      .bindExec()
+          movie
+        } as Func2)
+    }).bindExec()
   }
 
   Observable<UpdateResult> updateMovie(final Movie movie) {
 
-    mongoDatabase.getCollection(MovieCodec.COLLETION_NAME, Movie)
-      .updateOne(eq(DBCollection.ID_FIELD_NAME, movie.id), Updates.combine(
+    mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME, Movie)
+      .updateOne(eq(DBCollection.ID_FIELD_NAME, movie.id),
+      Updates.combine(
         Updates.set(MovieCodec.NAME_PROPERTY, movie.name),
+        Updates.set(MovieCodec.IMDB_ID_PROPERTY, movie.imdbId),
         Updates.set(MovieCodec.DESCRIPTION_PROPERTY, movie.name),
-        Updates.set(MovieCodec.IMAGE_URI_PROPERTY, movie.imageURI)
-    ))
-    .bindExec()
+        Updates.set(MovieCodec.POSTER_IMAGE_URI_PROPERTY, movie.posterImageURI),
+        Updates.set(MovieCodec.YEAR_RELEASED_PROPERTY, movie.yearReleased)))
+      .bindExec()
   }
 
   Observable<String> createMovie(final Movie movie) {
 
-    mongoDatabase.getCollection(MovieCodec.COLLETION_NAME, Movie)
+    mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME, Movie)
       .insertOne(movie)
       .map {
 
-        movie.id.toString()
-      }
-      .bindExec()
+      movie.id.toString()
+    }
+    .bindExec()
   }
 
   Observable<Boolean> deleteMovieByID(final ObjectId movieObjectId) {
 
-    final Observable<Long> deleteMovieRatingCache = ratedMovieRedisReactiveCommands.del(movieObjectId.toString())
-    final Observable<DeleteResult> deleteMovie = mongoDatabase.getCollection(MovieCodec.COLLETION_NAME, Movie)
+    final Observable<Long> deleteRatingsFromCache = ratingService.deleteRatingsForMovieId(movieObjectId)
+    final Observable<DeleteResult> deleteMovie = mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME, Movie)
       .deleteOne(eq(DBCollection.ID_FIELD_NAME, movieObjectId))
-    final Observable<DeleteResult> deleteMovieRatings = mongoDatabase.getCollection(RatingCodec.COLLETION_NAME, Rating)
+    final Observable<DeleteResult> deleteMovieRatings = mongoDatabase.getCollection(RatingCodec.COLLECTION_NAME, Rating)
       .deleteMany(eq(RatingCodec.MOVIE_ID_PROPERTY, movieObjectId))
 
-    Observable.zip(deleteMovieRatingCache, deleteMovie, deleteMovieRatings, { Long deletedRedisKeys, DeleteResult deletedMovieResult, DeleteResult deletedMovieRatingsResult ->
+    Observable.zip(deleteRatingsFromCache, deleteMovie, deleteMovieRatings,
+      { final Boolean deletedRedisKeys,
+        final DeleteResult deletedMovieResult,
+        final DeleteResult deletedMovieRatingsResult ->
 
-      log.info("Removing movie id ${movieObjectId.toString()}, deleting ${deletedRedisKeys} redis keys, ${deletedMovieResult.deletedCount} movies, and ${deletedMovieRatingsResult.deletedCount} ratings...")
+        log.trace("Removing movie id ${movieObjectId.toString()}, deleting ${deletedRedisKeys} redis keys, ${deletedMovieResult.deletedCount} movies, and ${deletedMovieRatingsResult.deletedCount} ratings...")
 
-      true
-    } as Func3)
-    .bindExec()
+        true
+      } as Func3)
+      .bindExec()
   }
 
-  Observable<Rating> rateMovie(final Rating rating) {
+  Observable<Movie> getAllMovies(final Bson queryFilter) {
 
-    mongoDatabase.getCollection(RatingCodec.COLLETION_NAME, Rating)
-      .findOneAndUpdate(and(eq(RatingCodec.MOVIE_ID_PROPERTY, rating.movieId), eq(RatingCodec.USER_ID_PROPERTY, rating.userId)),
-        Updates.combine(
-          Updates.set(RatingCodec.RATING_PROPERTY, rating.rating),
-          Updates.set(RatingCodec.COMMENT_PROPERTY, rating.comment)))
-      .asObservable()
-      .switchIfEmpty(
-        mongoDatabase.getCollection(RatingCodec.COLLETION_NAME, Rating)
-          .insertOne(rating)
-          .map { final Success success ->
-
-            rating
-          }
-      )
-      .asObservable()
-      .doOnNext ({ final Rating observedRating ->
-
-      ratedMovieRedisReactiveCommands.del(Util.getRedisMovieKey(observedRating.movieId))
-    } as Action1)
-    .bindExec()
-  }
-
-  Observable<RatedMovie> getAllMovies(final Bson queryFilter) {
-
-    mongoDatabase.getCollection(MovieCodec.COLLETION_NAME, Movie)
+    mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME, Movie)
       .find()
       .filter(queryFilter)
       .toObservable()
-      .flatMap(MOVIE_TO_RATED_MOVIE)
-    .bindExec()
+      .bindExec()
   }
 }

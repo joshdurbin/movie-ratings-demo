@@ -3,7 +3,7 @@ package io.durbs.movieratings.codec.mongo
 import com.mongodb.DBCollection
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import io.durbs.movieratings.model.persistent.Movie
+import io.durbs.movieratings.model.Movie
 import org.bson.BsonReader
 import org.bson.BsonString
 import org.bson.BsonValue
@@ -21,10 +21,12 @@ import org.bson.types.ObjectId
 class MovieCodec implements CollectibleCodec<Movie> {
 
   public static final String NAME_PROPERTY = 'name'
+  public static final String IMDB_ID_PROPERTY = 'imdbId'
   public static final String DESCRIPTION_PROPERTY = 'description'
-  public static final String IMAGE_URI_PROPERTY = 'imageURI'
+  public static final String POSTER_IMAGE_URI_PROPERTY = 'posterImageURI'
+  public static final String YEAR_RELEASED_PROPERTY = 'yearReleased'
 
-  public static final String COLLETION_NAME = 'movie'
+  public static final String COLLECTION_NAME = 'movie'
 
   static final Codec<Document> documentCodec = new DocumentCodec()
 
@@ -36,8 +38,10 @@ class MovieCodec implements CollectibleCodec<Movie> {
     new Movie(
       id: document.getObjectId(DBCollection.ID_FIELD_NAME),
       name: document.getString(NAME_PROPERTY),
+      imdbId: document.getString(IMDB_ID_PROPERTY),
       description: document.getString(DESCRIPTION_PROPERTY),
-      imageURI: document.getString(IMAGE_URI_PROPERTY))
+      posterImageURI: document.getString(POSTER_IMAGE_URI_PROPERTY),
+      yearReleased: document.getInteger(YEAR_RELEASED_PROPERTY))
   }
 
   @Override
@@ -53,12 +57,20 @@ class MovieCodec implements CollectibleCodec<Movie> {
       document.put(NAME_PROPERTY, movie.name)
     }
 
+    if (movie.imdbId) {
+      document.put(IMDB_ID_PROPERTY, movie.imdbId)
+    }
+
     if (movie.description) {
       document.put(DESCRIPTION_PROPERTY, movie.description)
     }
 
-    if (movie.imageURI) {
-      document.put(IMAGE_URI_PROPERTY, movie.imageURI)
+    if (movie.posterImageURI) {
+      document.put(POSTER_IMAGE_URI_PROPERTY, movie.posterImageURI)
+    }
+
+    if (movie.yearReleased) {
+      document.put(YEAR_RELEASED_PROPERTY, movie.yearReleased)
     }
 
     documentCodec.encode(writer, document, encoderContext)

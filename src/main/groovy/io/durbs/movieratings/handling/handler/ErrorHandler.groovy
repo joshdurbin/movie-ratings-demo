@@ -19,9 +19,7 @@ class ErrorHandler implements ServerErrorHandler {
 
     context.with {
 
-      render Jackson.json(new Error(uri: context.request.rawUri,
-        exception: StackTraceUtils.deepSanitize(throwable)))
-      context.clientError(403)
+      render Jackson.json(new Error(uri: context.request.rawUri, exception: StackTraceUtils.deepSanitize(throwable)))
     }
   }
 

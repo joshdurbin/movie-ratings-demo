@@ -5,15 +5,16 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.mongodb.client.result.UpdateResult
 import groovy.util.logging.Slf4j
-import io.durbs.movieratings.config.APIConfig
+import io.durbs.movieratings.MovieRatingsConfig
 import io.durbs.movieratings.handling.handler.JWTTokenHandler
 import io.durbs.movieratings.handling.handler.MovieIDExtractionAndVerificationHandler
-import io.durbs.movieratings.model.persistent.Movie
-import io.durbs.movieratings.model.persistent.RatedMovie
-import io.durbs.movieratings.model.persistent.Rating
-import io.durbs.movieratings.model.persistent.User
-import io.durbs.movieratings.model.convenience.ViewableRating
+import io.durbs.movieratings.model.Movie
+import io.durbs.movieratings.model.Rating
+import io.durbs.movieratings.model.User
+import io.durbs.movieratings.model.ViewableRating
 import io.durbs.movieratings.services.MovieService
+import io.durbs.movieratings.services.OMDBService
+import io.durbs.movieratings.services.RatingService
 import org.bson.Document
 import org.bson.types.ObjectId
 import ratpack.groovy.handling.GroovyChainAction
@@ -21,8 +22,10 @@ import ratpack.handling.Context
 import ratpack.jackson.Jackson
 import rx.functions.Func1
 
-import static com.mongodb.client.model.Filters.text
+import javax.validation.ConstraintViolation
+import javax.validation.Validator
 
+import static com.mongodb.client.model.Filters.text
 import static ratpack.jackson.Jackson.fromJson
 
 @Singleton
@@ -33,7 +36,16 @@ class MovieRestEndpoint extends GroovyChainAction {
   MovieService movieService
 
   @Inject
-  APIConfig apiConfig
+  RatingService ratingService
+
+  @Inject
+  MovieRatingsConfig movieRatingsConfig
+
+  @Inject
+  OMDBService omdbService
+
+  @Inject
+  Validator validator
 
   @Override
   void execute() throws Exception {
@@ -51,9 +63,26 @@ class MovieRestEndpoint extends GroovyChainAction {
         .getAllMovies(text(queryTerm))
         .toList()
         .defaultIfEmpty([])
-        .subscribe { final List<RatedMovie> movies ->
+        .subscribe { final List<Movie> movies ->
 
         render Jackson.json(movies)
+      }
+    }
+
+    get('movies/import/:imdbId') {
+
+      final String imdbId = context.pathTokens.get('imdbId')
+
+      omdbService
+        .getOMDBMovie(imdbId)
+        .flatMap({ final Movie movie ->
+
+        movieService.createMovie(movie)
+      } as Func1)
+      .single()
+      .subscribe { final String movieID ->
+
+        redirect("/api/movies/${movieID}")
       }
     }
 
@@ -67,7 +96,7 @@ class MovieRestEndpoint extends GroovyChainAction {
             .getAllMovies(new Document())
             .toList()
             .defaultIfEmpty([])
-            .subscribe { final List<RatedMovie> movies ->
+            .subscribe { final List<Movie> movies ->
 
             render Jackson.json(movies)
           }
@@ -79,11 +108,16 @@ class MovieRestEndpoint extends GroovyChainAction {
             .observe()
             .flatMap({ final Movie movie ->
 
+            final Set<ConstraintViolation<Movie>> violations = validator.validate(movie)
+            if (!violations.empty) {
+              throw new IllegalArgumentException("There are a number of constraint violations while creating the movie ${violations}")
+            }
+
             movieService.createMovie(movie)
           } as Func1)
             .subscribe { final String movieID ->
 
-            redirect("/api/movie/${movieID}")
+            redirect("/api/movies/${movieID}")
           }
         }
       }
@@ -100,9 +134,9 @@ class MovieRestEndpoint extends GroovyChainAction {
           get {
 
             movieService
-              .getRatedMovie(movieId)
+              .getMovie(movieId)
               .single()
-              .subscribe { final RatedMovie movie ->
+              .subscribe { final Movie movie ->
 
               render Jackson.json(movie)
             }
@@ -114,11 +148,16 @@ class MovieRestEndpoint extends GroovyChainAction {
               .observe()
               .flatMap({ final Movie movie ->
 
+              final Set<ConstraintViolation<Movie>> violations = validator.validate(movie)
+              if (!violations.empty) {
+                throw new IllegalArgumentException("There are a number of constraint violations while updating the movie ${violations}")
+              }
+
               movieService.updateMovie(movie)
             } as Func1)
               .subscribe { final UpdateResult updateResult ->
 
-              redirect("/api/movie/${movieId.toString()}")
+              redirect("/api/movies/${movieId.toString()}")
             }
 
           }
@@ -142,8 +181,8 @@ class MovieRestEndpoint extends GroovyChainAction {
 
           get {
 
-            movieService
-              .getMovieRatings(movieId)
+            ratingService
+              .getIndividualUserRatingsAndComment(movieId)
               .toList()
               .subscribe { final List<ViewableRating> ratings ->
 
@@ -157,20 +196,19 @@ class MovieRestEndpoint extends GroovyChainAction {
               .observe()
               .flatMap({ final Rating rating ->
 
-              final Range<Integer> acceptableRatingRange = Range.closed(apiConfig.ratingLowerBound, apiConfig.ratingUpperBound)
-              if (!acceptableRatingRange.contains(rating.rating)) {
-
-                throw new IllegalArgumentException("A range must be between ${apiConfig.ratingLowerBound} and ${apiConfig.ratingUpperBound}")
+              final Set<ConstraintViolation<Rating>> violations = validator.validate(rating)
+              if (!violations.empty) {
+                throw new IllegalArgumentException("There are a number of constraint violations on rating submission... ${violations}")
               }
 
               rating.movieId = movieId
               rating.userId = context.get(User).id
 
-              movieService.rateMovie(rating)
+              ratingService.rateMovie(rating)
             } as Func1)
               .subscribe { final Rating rating ->
 
-              redirect("/api/movie/${rating.movieId.toString()}")
+              redirect("/api/movies/${rating.movieId.toString()}")
             }
           }
         }

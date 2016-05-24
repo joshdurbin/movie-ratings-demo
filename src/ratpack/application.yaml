@@ -1,18 +1,8 @@
-aws:
-  accessKey:
-  secretKey:
-redis:
-  uri: redis://localhost:32768
-  movieRatingsCacheTTLInSeconds: 3600
-mongo:
-  db: movie-ratings
-  uri: mongodb://localhost:32769/movie-ratings?w=1
-security:
-  jwtSigningKey: 23214F888132773A753654BC8D4E7FBB2670954D8C599568FB77F86C49CA6F5C
-  jwtTokenTTLInHours: 336
-api:
-  ratingLowerBound: 0
-  ratingUpperBound: 10
-  defaultResultsPageSize: 20
-  maxResultsPageSize: 50
-  defaultFirstPage: 0
+mongoDb: movie-ratings
+mongoURI: mongodb://localhost:32768/movie-ratings?w=1
+jwtSigningKey: 23214F888132773A753654BC8D4E7FBB2670954D8C599568FB77F86C49CA6F5C
+jwtTokenTTLInHours: 336
+redisURI: redis://localhost:32769
+computedRatingsCacheTTLInSeconds: 3600
+externalRatingsCacheTTLInSeconds: 86400
+userCacheTTLInSeconds: 28800
