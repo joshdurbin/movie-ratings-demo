@@ -1,5 +1,7 @@
 package io.durbs.movieratings.services
 
+import com.google.common.base.Splitter
+import com.google.common.collect.Lists
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.netflix.hystrix.HystrixCommandGroupKey
@@ -37,7 +39,7 @@ class OMDBService {
       @Override
       protected Observable<Movie> construct() {
 
-        final String endpoint = "http://www.omdbapi.com/?i=${imdbId}&tomatoes=true"
+        final String endpoint = "http://www.omdbapi.com/?i=${imdbId}&plot=full"
         final URI endpointURI = endpoint.toURI()
 
         log.trace("Opening a GET request to ${endpoint}...")
@@ -53,7 +55,10 @@ class OMDBService {
             imdbId: parsedObjectMap.get('imdbID'),
             description: parsedObjectMap.get('Plot'),
             posterImageURI: parsedObjectMap.get('Poster'),
-            yearReleased: parsedObjectMap.get('Year') as Integer)
+            yearReleased: parsedObjectMap.get('Year') as Integer,
+            genre: Lists.newArrayList(Splitter.on(',').trimResults().omitEmptyStrings().split(parsedObjectMap.get('Genre'))),
+            actors: Lists.newArrayList(Splitter.on(',').trimResults().omitEmptyStrings().split(parsedObjectMap.get('Actors'))),
+            director: parsedObjectMap.get('Director'))
         }.defaultIfEmpty(null)
       }
 
@@ -92,7 +97,8 @@ class OMDBService {
             rottenTomatoRating: parsedObjectMap.get('tomatoRating') as Double,
             totalRottenTomatoRatings: parsedObjectMap.get('tomatoReviews') as Integer,
             rottenTomatoUserRating: parsedObjectMap.get('tomatoUserRating') as Double,
-            totalRottenTomatoUserRatings: parsedObjectMap.get('tomatoUserReviews') as Integer)
+            totalRottenTomatoUserRatings: parsedObjectMap.get('tomatoUserReviews') as Integer,
+            metascore: parsedObjectMap.get('Metascore') as Integer)
         }.defaultIfEmpty(null)
       }
 

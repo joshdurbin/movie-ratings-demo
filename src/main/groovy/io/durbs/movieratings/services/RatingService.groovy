@@ -17,13 +17,11 @@ import io.durbs.movieratings.codec.mongo.UserCodec
 import io.durbs.movieratings.model.ComputedUserRating
 import io.durbs.movieratings.model.ExternalRating
 import io.durbs.movieratings.model.Rating
-import io.durbs.movieratings.model.User
-import io.durbs.movieratings.model.ViewableRating
+
 import org.bson.Document
 import org.bson.types.ObjectId
 import rx.Observable
 import rx.functions.Action1
-import rx.functions.Func1
 import rx.functions.Func2
 
 import static com.mongodb.client.model.Accumulators.avg
@@ -111,34 +109,11 @@ class RatingService {
       })
   }
 
-  Observable<ViewableRating> getIndividualUserRatingsAndComment(final ObjectId objectId) {
-
-    mongoDatabase.getCollection(RatingCodec.COLLECTION_NAME, Rating)
-      .find(eq(RatingCodec.MOVIE_ID_PROPERTY, objectId))
-      .toObservable()
-      .flatMap({ final Rating rating ->
-
-      mongoDatabase.getCollection(UserCodec.COLLECTION_NAME, User)
-        .find(eq(DBCollection.ID_FIELD_NAME, rating.userId))
-        .toObservable()
-        .map({ final User user ->
-
-        new ViewableRating(username: user.username,
-          usersGivenName: user.name,
-          rating: rating.rating,
-          comment: rating.comment)
-      })
-    } as Func1)
-    .bindExec()
-  }
-
   Observable<Rating> rateMovie(final Rating rating) {
 
     mongoDatabase.getCollection(RatingCodec.COLLECTION_NAME, Rating)
       .findOneAndUpdate(and(eq(RatingCodec.MOVIE_ID_PROPERTY, rating.movieId), eq(RatingCodec.USER_ID_PROPERTY, rating.userId)),
-      Updates.combine(
-        Updates.set(RatingCodec.RATING_PROPERTY, rating.rating),
-        Updates.set(RatingCodec.COMMENT_PROPERTY, rating.comment)))
+      Updates.set(RatingCodec.RATING_PROPERTY, rating.rating))
       .asObservable()
       .switchIfEmpty(
       mongoDatabase.getCollection(RatingCodec.COLLECTION_NAME, Rating)
@@ -152,7 +127,7 @@ class RatingService {
       .doOnNext({ final Rating observedRating ->
 
       log.debug("Clearing computed rating cache with key ${getComputedUserRatingCacheKey(observedRating.movieId)}")
-      computedRatingCache.del(getComputedUserRatingCacheKey(observedRating.movieId))
+      computedRatingCache.del(getComputedUserRatingCacheKey(observedRating.movieId)).subscribe()
     } as Action1)
       .bindExec()
   }

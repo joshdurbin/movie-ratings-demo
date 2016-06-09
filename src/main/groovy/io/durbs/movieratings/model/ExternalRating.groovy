@@ -15,4 +15,6 @@ class ExternalRating {
 
   Double rottenTomatoUserRating
   Integer totalRottenTomatoUserRatings
+
+  Integer metascore
 }

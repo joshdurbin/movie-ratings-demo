@@ -16,9 +16,11 @@ import io.durbs.movieratings.model.ComputedUserRating
 import io.durbs.movieratings.model.ExternalRating
 import io.durbs.movieratings.model.Movie
 import io.durbs.movieratings.model.Rating
+import org.bson.Document
 import org.bson.conversions.Bson
 import org.bson.types.ObjectId
 import rx.Observable
+import rx.functions.Func1
 import rx.functions.Func2
 import rx.functions.Func3
 
@@ -34,6 +36,20 @@ class MovieService {
 
   @Inject
   RatingService ratingService
+
+  private final Func1 MOVIE_TO_RATED_MOVIE = { final Movie movie ->
+
+    Observable.zip(ratingService.getComputedUserRating(movie.id),
+      ratingService.getExternalRating(movie.imdbId),
+      { final ComputedUserRating computedUserRating,
+        final ExternalRating externalRating ->
+
+        movie.computedRating = computedUserRating
+        movie.externalRating = externalRating
+
+        movie
+      } as Func2)
+  } as Func1
 
   Observable<Boolean> movieExists(final ObjectId objectId) {
 
@@ -51,19 +67,19 @@ class MovieService {
     mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME, Movie)
       .find(eq(DBCollection.ID_FIELD_NAME, objectId))
       .toObservable()
-      .flatMap({ final Movie movie ->
+      .flatMap(MOVIE_TO_RATED_MOVIE).bindExec()
+  }
 
-      Observable.zip(ratingService.getComputedUserRating(movie.id),
-        ratingService.getExternalRating(movie.imdbId),
-        { final ComputedUserRating computedUserRating,
-          final ExternalRating externalRating ->
+  Observable<String> getExistingMovieIMDBIDs() {
 
-          movie.computedRating = computedUserRating
-          movie.externalRating = externalRating
+    mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME)
+      .find()
+      .projection(Projections.include(MovieCodec.IMDB_ID_PROPERTY))
+      .toObservable()
+      .map({ final Document document ->
 
-          movie
-        } as Func2)
-    }).bindExec()
+        document.getString(MovieCodec.IMDB_ID_PROPERTY)
+      }).bindExec()
   }
 
   Observable<UpdateResult> updateMovie(final Movie movie) {
@@ -99,13 +115,14 @@ class MovieService {
       .deleteMany(eq(RatingCodec.MOVIE_ID_PROPERTY, movieObjectId))
 
     Observable.zip(deleteRatingsFromCache, deleteMovie, deleteMovieRatings,
-      { final Boolean deletedRedisKeys,
+      { final Long deletedRedisKeys,
         final DeleteResult deletedMovieResult,
         final DeleteResult deletedMovieRatingsResult ->
 
-        log.trace("Removing movie id ${movieObjectId.toString()}, deleting ${deletedRedisKeys} redis keys, ${deletedMovieResult.deletedCount} movies, and ${deletedMovieRatingsResult.deletedCount} ratings...")
+        log.info("Removing movie id ${movieObjectId.toString()}, deleting ${deletedRedisKeys} redis keys, ${deletedMovieResult.deletedCount} movies, and ${deletedMovieRatingsResult.deletedCount} ratings...")
 
-        true
+        deletedMovieResult.deletedCount > 0
+
       } as Func3)
       .bindExec()
   }
@@ -116,6 +133,7 @@ class MovieService {
       .find()
       .filter(queryFilter)
       .toObservable()
+      .flatMap(MOVIE_TO_RATED_MOVIE)
       .bindExec()
   }
 }

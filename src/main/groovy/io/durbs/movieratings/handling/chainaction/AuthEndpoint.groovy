@@ -44,7 +44,7 @@ class AuthEndpoint extends GroovyChainAction {
       } as Func1)
         .subscribe { final String jwt ->
 
-        context.render(Jackson.json(jwt))
+        render(Jackson.json(['jwt_token':jwt]))
       }
     }
 
@@ -64,7 +64,7 @@ class AuthEndpoint extends GroovyChainAction {
 
         if (jwt != Constants.PLACE_HOLDER_INVALID_JWT_TOKEN) {
 
-          render(Jackson.json(jwt))
+          render(Jackson.json(['jwt_token':jwt]))
         } else {
 
           clientError(401)
