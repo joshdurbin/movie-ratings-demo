@@ -58,7 +58,11 @@ class OMDBService {
             yearReleased: parsedObjectMap.get('Year') as Integer,
             genre: Lists.newArrayList(Splitter.on(',').trimResults().omitEmptyStrings().split(parsedObjectMap.get('Genre'))),
             actors: Lists.newArrayList(Splitter.on(',').trimResults().omitEmptyStrings().split(parsedObjectMap.get('Actors'))),
-            director: parsedObjectMap.get('Director'))
+            directors: Lists.newArrayList(Splitter.on(',').trimResults().omitEmptyStrings().split(parsedObjectMap.get('Director'))),
+            writers: Lists.newArrayList(Splitter.on(',').trimResults().omitEmptyStrings().split(parsedObjectMap.get('Writer'))),
+            languages: Lists.newArrayList(Splitter.on(',').trimResults().omitEmptyStrings().split(parsedObjectMap.get('Language'))),
+            mpaaRating: parsedObjectMap.get('Rated'),
+            awards: parsedObjectMap.get('Awards'))
         }.defaultIfEmpty(null)
       }
 

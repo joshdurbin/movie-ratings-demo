@@ -2,14 +2,12 @@ package io.durbs.movieratings.handling.chainaction
 
 import com.google.inject.Inject
 import com.google.inject.Singleton
-import com.mongodb.client.result.UpdateResult
 import groovy.util.logging.Slf4j
 import io.durbs.movieratings.handling.handler.JWTTokenHandler
 import io.durbs.movieratings.handling.handler.MovieIDExtractionAndVerificationHandler
 import io.durbs.movieratings.model.Movie
 import io.durbs.movieratings.model.Rating
 import io.durbs.movieratings.model.User
-import io.durbs.movieratings.model.ViewableRating
 import io.durbs.movieratings.services.MovieService
 import io.durbs.movieratings.services.OMDBService
 import io.durbs.movieratings.services.RatingService

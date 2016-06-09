@@ -18,7 +18,11 @@ class Movie {
   Integer yearReleased
   List<String> genre
   List<String> actors
-  String director
+  List<String> directors
+  List<String> writers
+  List<String> languages
+  String mpaaRating
+  String awards
 
   @Delegate
   @JsonIgnore

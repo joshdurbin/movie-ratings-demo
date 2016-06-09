@@ -27,7 +27,11 @@ class MovieCodec implements CollectibleCodec<Movie> {
   public static final String YEAR_RELEASED_PROPERTY = 'yearReleased'
   public static final String GENRE_PROPERTY = 'genre'
   public static final String ACTORS_PROPERTY = 'actors'
-  public static final String DIRECTOR_PROPERTY = 'director'
+  public static final String DIRECTORS_PROPERTY = 'directors'
+  public static final String WRITERS_PROPERTY = 'writers'
+  public static final String LANGUAGES_PROPERTY = 'languages'
+  public static final String MPAA_RATING_PROPERTY = 'mpaaRating'
+  public static final String AWARDS_PROPERTY = 'awards'
 
   public static final String COLLECTION_NAME = 'movie'
 
@@ -47,7 +51,11 @@ class MovieCodec implements CollectibleCodec<Movie> {
       yearReleased: document.getInteger(YEAR_RELEASED_PROPERTY),
       genre: document.get(GENRE_PROPERTY, List),
       actors: document.get(ACTORS_PROPERTY, List),
-      director: document.getString(DIRECTOR_PROPERTY))
+      directors: document.get(DIRECTORS_PROPERTY, List),
+      writers: document.get(WRITERS_PROPERTY, List),
+      languages: document.get(LANGUAGES_PROPERTY, List),
+      mpaaRating: document.getString(MPAA_RATING_PROPERTY),
+      awards: document.getString(AWARDS_PROPERTY),)
   }
 
   @Override
@@ -56,14 +64,54 @@ class MovieCodec implements CollectibleCodec<Movie> {
     final Document document = new Document()
 
     document.put(DBCollection.ID_FIELD_NAME, movie.id)
-    document.put(NAME_PROPERTY, movie.name)
-    document.put(IMDB_ID_PROPERTY, movie.imdbId)
-    document.put(DESCRIPTION_PROPERTY, movie.description)
-    document.put(POSTER_IMAGE_URI_PROPERTY, movie.posterImageURI)
-    document.put(YEAR_RELEASED_PROPERTY, movie.yearReleased)
-    document.put(GENRE_PROPERTY, movie.genre)
-    document.put(ACTORS_PROPERTY, movie.actors)
-    document.put(DIRECTOR_PROPERTY, movie.director)
+
+    if (movie.name) {
+      document.put(NAME_PROPERTY, movie.name)
+    }
+
+    if (movie.imdbId) {
+      document.put(IMDB_ID_PROPERTY, movie.imdbId)
+    }
+
+    if (movie.description) {
+      document.put(DESCRIPTION_PROPERTY, movie.description)
+    }
+
+    if (movie.posterImageURI) {
+      document.put(POSTER_IMAGE_URI_PROPERTY, movie.posterImageURI)
+    }
+
+    if (movie.yearReleased) {
+      document.put(YEAR_RELEASED_PROPERTY, movie.yearReleased)
+    }
+
+    if (movie.genre) {
+      document.put(GENRE_PROPERTY, movie.genre)
+    }
+
+    if (movie.actors) {
+      document.put(ACTORS_PROPERTY, movie.actors)
+    }
+
+    if (movie.directors) {
+      document.put(DIRECTORS_PROPERTY, movie.directors)
+    }
+
+    if (movie.writers) {
+      document.put(WRITERS_PROPERTY, movie.writers)
+    }
+
+    if (movie.languages) {
+      document.put(LANGUAGES_PROPERTY, movie.languages)
+    }
+
+    if (movie.mpaaRating) {
+      document.put(MPAA_RATING_PROPERTY, movie.mpaaRating)
+    }
+
+    if (movie.awards) {
+      document.put(AWARDS_PROPERTY, movie.awards)
+    }
 
     documentCodec.encode(writer, document, encoderContext)
   }
