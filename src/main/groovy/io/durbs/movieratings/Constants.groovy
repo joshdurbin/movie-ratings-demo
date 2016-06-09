@@ -6,6 +6,8 @@ import groovy.transform.CompileStatic
 @Singleton
 class Constants {
 
+  public static final String OMDB_DEFAULT_DELIMITER = ','
+
   public static final String BEARER_AUTHORIZATION_SCHEMA_KEY = 'Bearer'
   public static final String BEARER_AUTHORIZATION_PREFIX = "${BEARER_AUTHORIZATION_SCHEMA_KEY} "
 

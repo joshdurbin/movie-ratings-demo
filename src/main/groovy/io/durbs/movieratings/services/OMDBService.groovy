@@ -1,7 +1,6 @@
 package io.durbs.movieratings.services
 
 import com.google.common.base.Splitter
-import com.google.common.collect.Lists
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.netflix.hystrix.HystrixCommandGroupKey
@@ -10,6 +9,7 @@ import com.netflix.hystrix.HystrixObservableCommand
 import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.durbs.movieratings.Constants
 import io.durbs.movieratings.model.ExternalRating
 import io.durbs.movieratings.model.Movie
 import ratpack.http.client.HttpClient
@@ -29,6 +29,8 @@ class OMDBService {
 
   @Inject
   HttpClient httpClient
+
+  static final Splitter COMMA_SPLITTER = Splitter.on(Constants.OMDB_DEFAULT_DELIMITER).trimResults().omitEmptyStrings()
 
   Observable<Movie> getOMDBMovie(final String imdbId) {
 
@@ -56,11 +58,11 @@ class OMDBService {
             description: parsedObjectMap.get('Plot'),
             posterImageURI: parsedObjectMap.get('Poster'),
             yearReleased: parsedObjectMap.get('Year') as Integer,
-            genre: Lists.newArrayList(Splitter.on(',').trimResults().omitEmptyStrings().split(parsedObjectMap.get('Genre'))),
-            actors: Lists.newArrayList(Splitter.on(',').trimResults().omitEmptyStrings().split(parsedObjectMap.get('Actors'))),
-            directors: Lists.newArrayList(Splitter.on(',').trimResults().omitEmptyStrings().split(parsedObjectMap.get('Director'))),
-            writers: Lists.newArrayList(Splitter.on(',').trimResults().omitEmptyStrings().split(parsedObjectMap.get('Writer'))),
-            languages: Lists.newArrayList(Splitter.on(',').trimResults().omitEmptyStrings().split(parsedObjectMap.get('Language'))),
+            genre: COMMA_SPLITTER.splitToList(parsedObjectMap.get('Genre')),
+            actors: COMMA_SPLITTER.splitToList(parsedObjectMap.get('Actors')),
+            directors: COMMA_SPLITTER.splitToList(parsedObjectMap.get('Director')),
+            writers: COMMA_SPLITTER.splitToList(parsedObjectMap.get('Writer')),
+            languages: COMMA_SPLITTER.splitToList(parsedObjectMap.get('Language')),
             mpaaRating: parsedObjectMap.get('Rated'),
             awards: parsedObjectMap.get('Awards'))
         }.defaultIfEmpty(null)
