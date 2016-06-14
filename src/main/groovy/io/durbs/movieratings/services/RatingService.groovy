@@ -4,7 +4,6 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.lambdaworks.redis.SetArgs
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands
-import com.mongodb.DBCollection
 import com.mongodb.client.model.Updates
 import com.mongodb.rx.client.MongoDatabase
 import com.mongodb.rx.client.Success
@@ -13,7 +12,6 @@ import groovy.util.logging.Slf4j
 import io.durbs.movieratings.Constants
 import io.durbs.movieratings.MovieRatingsConfig
 import io.durbs.movieratings.codec.mongo.RatingCodec
-import io.durbs.movieratings.codec.mongo.UserCodec
 import io.durbs.movieratings.model.ComputedUserRating
 import io.durbs.movieratings.model.ExternalRating
 import io.durbs.movieratings.model.Rating
@@ -96,10 +94,8 @@ class RatingService {
     externalRatingCache.get(getExternalRatingCacheKey(imdbId))
       .switchIfEmpty (
 
-      Observable.just(new ExternalRating(totalRottenTomatoUserRatings: 0,
-        totalRottenTomatoRatings: 0,
-        totalImdbRatings: 0))
-      //omdbService.getOMDBExternalRatingForMovie(imdbId)
+      Observable.just(new ExternalRating([:]))
+//      omdbService.getOMDBExternalRatingForMovie(imdbId)
         .doOnNext { final ExternalRating externalRating ->
 
         log.info("Inserted external rating in cache as key ${getExternalRatingCacheKey(imdbId)}")
