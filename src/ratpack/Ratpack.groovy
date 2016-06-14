@@ -28,7 +28,9 @@ ratpack {
     all {
 
       // cross origin resource sharing header
+      response.headers.add('Access-Control-Allow-Methods', 'GET, POST, DELETE')
       response.headers.add('Access-Control-Allow-Origin', '*')
+      response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
 
       next()
     }
