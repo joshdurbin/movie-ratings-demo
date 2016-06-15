@@ -73,6 +73,7 @@ class OMDBService {
         Observable.empty()
       }
     }.toObservable()
+    .bindExec()
   }
 
   Observable<ExternalRating> getOMDBExternalRatingForMovie(final String imdbId) {
@@ -113,5 +114,6 @@ class OMDBService {
         Observable.empty()
       }
     }.toObservable()
+    .bindExec()
   }
 }

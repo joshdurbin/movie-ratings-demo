@@ -62,6 +62,7 @@ class RatingService {
   Observable<ComputedUserRating> getComputedUserRating(final ObjectId movieId) {
 
     computedRatingCache.get(getComputedUserRatingCacheKey(movieId))
+      .bindExec()
       .switchIfEmpty(
 
       mongoDatabase.getCollection(RatingCodec.COLLECTION_NAME, Rating)
@@ -92,10 +93,9 @@ class RatingService {
   Observable<ExternalRating> getExternalRating(final String imdbId) {
 
     externalRatingCache.get(getExternalRatingCacheKey(imdbId))
+      .bindExec()
       .switchIfEmpty (
-
-      Observable.just(new ExternalRating([:]))
-//      omdbService.getOMDBExternalRatingForMovie(imdbId)
+      omdbService.getOMDBExternalRatingForMovie(imdbId)
         .doOnNext { final ExternalRating externalRating ->
 
         log.info("Inserted external rating in cache as key ${getExternalRatingCacheKey(imdbId)}")
@@ -111,6 +111,7 @@ class RatingService {
       .findOneAndUpdate(and(eq(RatingCodec.MOVIE_ID_PROPERTY, rating.movieId), eq(RatingCodec.USER_ID_PROPERTY, rating.userId)),
       Updates.set(RatingCodec.RATING_PROPERTY, rating.rating))
       .asObservable()
+      .bindExec()
       .switchIfEmpty(
       mongoDatabase.getCollection(RatingCodec.COLLECTION_NAME, Rating)
         .insertOne(rating)

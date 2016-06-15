@@ -133,7 +133,7 @@ class MovieService {
       .find()
       .filter(queryFilter)
       .toObservable()
-      .flatMap(MOVIE_TO_RATED_MOVIE)
       .bindExec()
+      .flatMap(MOVIE_TO_RATED_MOVIE)
   }
 }
