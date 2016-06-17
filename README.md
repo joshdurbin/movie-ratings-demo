@@ -18,6 +18,6 @@ The list of restricted endpoints includes:
 
 * Creation of a movie with a `POST` to `/api/movies` with a query parameter key of `imdbId` and a value of an existing IMDB Movie ID
 * Removal of a movie and all ratings with a `DELETE` to `/api/movies/$id`
-* Creation of a rating with a `POST` to `/api/movies/$id/ratings` with a JSON payload of `{'rating': 1}`. A rating is defined as an integer ranging from 1-5.
+* Creation of a rating with a `POST` to `/api/movies/$id/ratings` with a JSON payload of `{'rating': 1}`. A rating is defined as an integer ranging from 1-10.
 
 [![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/joshdurbin/movie-ratings-demo)
