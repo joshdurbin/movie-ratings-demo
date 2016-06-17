@@ -25,6 +25,14 @@ import static ratpack.rx.RxRatpack.observe
 @Slf4j
 class OMDBService {
 
+  static final ExternalRating NO_EXTERNAL_RATING = new ExternalRating(imdbRating: 0.0,
+    totalImdbRatings: 0,
+    rottenTomatoRating: 0.0,
+    totalRottenTomatoRatings: 0,
+    rottenTomatoUserRating: 0.0,
+    totalRottenTomatoUserRatings: 0,
+    metascore: 0)
+
   static final String OMDB_HYSTRIX_COMMAND_GROUND_KEY = 'omdb-service'
 
   @Inject
@@ -106,12 +114,12 @@ class OMDBService {
             rottenTomatoUserRating: parsedObjectMap.get('tomatoUserRating') as Double,
             totalRottenTomatoUserRatings: parsedObjectMap.get('tomatoUserReviews') as Integer,
             metascore: parsedObjectMap.get('Metascore') as Integer)
-        }.defaultIfEmpty(null)
+        }.defaultIfEmpty(NO_EXTERNAL_RATING)
       }
 
       @Override
       protected Observable<ExternalRating> resumeWithFallback() {
-        Observable.empty()
+        Observable.just(NO_EXTERNAL_RATING)
       }
     }.toObservable()
     .bindExec()
