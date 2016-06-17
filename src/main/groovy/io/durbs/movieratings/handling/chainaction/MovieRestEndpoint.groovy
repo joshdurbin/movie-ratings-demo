@@ -5,7 +5,6 @@ import com.google.inject.Singleton
 import groovy.util.logging.Slf4j
 import io.durbs.movieratings.handling.handler.JWTTokenHandler
 import io.durbs.movieratings.handling.handler.MovieIDExtractionAndVerificationHandler
-import io.durbs.movieratings.model.ExternalRating
 import io.durbs.movieratings.model.Movie
 import io.durbs.movieratings.model.Rating
 import io.durbs.movieratings.model.User
@@ -48,20 +47,6 @@ class MovieRestEndpoint extends GroovyChainAction {
       final Context context ->
         !context.getRequest().getMethod().isGet()
     }, JWTTokenHandler)
-
-    // THIS IS FOR TESTING AT THE MOMENT
-    get('omdb/movie/:id/rating') {
-
-      final String movieId = context.pathTokens.get('id')
-
-      omdbService
-        .getOMDBExternalRatingForMovie(movieId)
-        .defaultIfEmpty( null )
-        .subscribe { final ExternalRating externalRating ->
-
-        render Jackson.json(externalRating)
-      }
-    }
 
     get('movies/search') {
 
