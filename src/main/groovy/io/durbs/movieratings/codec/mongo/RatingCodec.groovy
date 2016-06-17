@@ -23,7 +23,6 @@ class RatingCodec implements CollectibleCodec<Rating> {
   public static final String USER_ID_PROPERTY = 'userId'
   public static final String MOVIE_ID_PROPERTY = 'movieId'
   public static final String RATING_PROPERTY = 'rating'
-  public static final String COMMENT_PROPERTY = 'comment'
 
   public static final String COLLECTION_NAME = 'rating'
 
