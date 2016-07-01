@@ -23,6 +23,7 @@ class RatingCodec implements CollectibleCodec<Rating> {
   public static final String USER_ID_PROPERTY = 'userId'
   public static final String MOVIE_ID_PROPERTY = 'movieId'
   public static final String RATING_PROPERTY = 'rating'
+  public static final String COMMENT_PROPERTY = 'comment'
 
   public static final String COLLECTION_NAME = 'rating'
 
@@ -37,7 +38,8 @@ class RatingCodec implements CollectibleCodec<Rating> {
       id: document.getObjectId(DBCollection.ID_FIELD_NAME),
       userId: document.getObjectId(USER_ID_PROPERTY),
       movieId: document.getObjectId(MOVIE_ID_PROPERTY),
-      rating: document.getInteger(RATING_PROPERTY))
+      rating: document.getInteger(RATING_PROPERTY),
+      comment: document.getString(COMMENT_PROPERTY))
   }
 
   @Override
@@ -49,6 +51,7 @@ class RatingCodec implements CollectibleCodec<Rating> {
     document.put(USER_ID_PROPERTY, rating.userId)
     document.put(MOVIE_ID_PROPERTY, rating.movieId)
     document.put(RATING_PROPERTY, rating.rating)
+    document.put(COMMENT_PROPERTY, rating.comment)
 
     documentCodec.encode(writer, document, encoderContext)
   }

@@ -3,15 +3,17 @@ package io.durbs.movieratings.handling.chainaction
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import groovy.util.logging.Slf4j
+import io.durbs.movieratings.handling.handler.pagination.GetAllMoviesHandler
 import io.durbs.movieratings.handling.handler.JWTTokenHandler
 import io.durbs.movieratings.handling.handler.MovieIDExtractionAndVerificationHandler
+import io.durbs.movieratings.handling.handler.pagination.MovieSearchHandler
 import io.durbs.movieratings.model.Movie
 import io.durbs.movieratings.model.Rating
 import io.durbs.movieratings.model.User
+import io.durbs.movieratings.model.ViewableRating
 import io.durbs.movieratings.services.MovieService
 import io.durbs.movieratings.services.OMDBService
 import io.durbs.movieratings.services.RatingService
-import org.bson.Document
 import org.bson.types.ObjectId
 import ratpack.groovy.handling.GroovyChainAction
 import ratpack.handling.Context
@@ -21,7 +23,6 @@ import rx.functions.Func1
 import javax.validation.ConstraintViolation
 import javax.validation.Validator
 
-import static com.mongodb.client.model.Filters.text
 import static ratpack.jackson.Jackson.fromJson
 
 @Singleton
@@ -48,19 +49,7 @@ class MovieRestEndpoint extends GroovyChainAction {
         !context.getRequest().getMethod().isGet()
     }, JWTTokenHandler)
 
-    get('movies/search') {
-
-      final String queryTerm = request.queryParams.get('q', '')
-
-      movieService
-        .getAllMovies(text(queryTerm))
-        .toList()
-        .defaultIfEmpty([])
-        .subscribe { final List<Movie> movies ->
-
-        render Jackson.json(movies)
-      }
-    }
+    get('movies/search', MovieSearchHandler)
 
     get('movies/imdbids') {
 
@@ -79,15 +68,7 @@ class MovieRestEndpoint extends GroovyChainAction {
       byMethod {
 
         get {
-
-          movieService
-            .getAllMovies(new Document())
-            .toList()
-            .defaultIfEmpty([])
-            .subscribe { final List<Movie> movies ->
-
-            render Jackson.json(movies)
-          }
+          insert context.get(GetAllMoviesHandler)
         }
 
         post {
@@ -144,6 +125,17 @@ class MovieRestEndpoint extends GroovyChainAction {
       path('ratings') { final ObjectId movieId ->
 
         byMethod {
+
+          get {
+
+            ratingService
+              .getIndividualUserRatingsAndComment(movieId)
+              .toList()
+              .subscribe { final List<ViewableRating> ratings ->
+
+              render Jackson.json(ratings)
+            }
+          }
 
           post {
 

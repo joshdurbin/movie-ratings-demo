@@ -1,8 +1,11 @@
+defaultResultsPageSize: 20
+maxResultsPageSize: 50
+defaultFirstPage: 0
 mongoDb: movie-ratings
-mongoURI: mongodb://localhost:32769/movie-ratings?w=1
+mongoURI: mongodb://localhost/movie-ratings?w=1
 jwtSigningKey: 23214F888132773A753654BC8D4E7FBB2670954D8C599568FB77F86C49CA6F5C
 jwtTokenTTLInHours: 336
-redisURI: redis://localhost:32770
+redisURI: redis://localhost
 computedRatingsCacheTTLInSeconds: 3600
 externalRatingsCacheTTLInSeconds: 86400
 userCacheTTLInSeconds: 28800

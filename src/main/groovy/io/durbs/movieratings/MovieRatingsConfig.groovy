@@ -7,6 +7,10 @@ import groovy.transform.Immutable
 @Immutable
 class MovieRatingsConfig {
 
+  Integer defaultResultsPageSize
+  Integer maxResultsPageSize
+  Integer defaultFirstPage
+
   String mongoDb
   String mongoURI
 

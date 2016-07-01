@@ -24,4 +24,6 @@ class Rating {
   @Min(value = 1L, message = 'The minimum vote is 1')
   @Max(value = 10L, message = 'The maximum vote is 10')
   Integer rating
+
+  String comment
 }

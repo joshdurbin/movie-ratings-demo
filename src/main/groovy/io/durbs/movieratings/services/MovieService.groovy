@@ -67,7 +67,8 @@ class MovieService {
     mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME, Movie)
       .find(eq(DBCollection.ID_FIELD_NAME, objectId))
       .toObservable()
-      .flatMap(MOVIE_TO_RATED_MOVIE).bindExec()
+      .bindExec()
+      .flatMap(MOVIE_TO_RATED_MOVIE)
   }
 
   Observable<String> getExistingMovieIMDBIDs() {
@@ -76,10 +77,11 @@ class MovieService {
       .find()
       .projection(Projections.include(MovieCodec.IMDB_ID_PROPERTY))
       .toObservable()
+      .bindExec()
       .map({ final Document document ->
 
         document.getString(MovieCodec.IMDB_ID_PROPERTY)
-      }).bindExec()
+      })
   }
 
   Observable<UpdateResult> updateMovie(final Movie movie) {
@@ -127,11 +129,20 @@ class MovieService {
       .bindExec()
   }
 
-  Observable<Movie> getAllMovies(final Bson queryFilter) {
+  Observable<Long> getMovieCount(final Bson queryFilter) {
+
+    mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME)
+      .count(queryFilter)
+      .bindExec()
+  }
+
+  Observable<Movie> getAllMovies(final Bson queryFilter, final Integer pageNumber, final Integer skipCount) {
 
     mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME, Movie)
       .find()
       .filter(queryFilter)
+      .limit(pageNumber)
+      .skip(skipCount)
       .toObservable()
       .bindExec()
       .flatMap(MOVIE_TO_RATED_MOVIE)
