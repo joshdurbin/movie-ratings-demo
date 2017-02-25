@@ -67,6 +67,8 @@ class MovieRatingsModule extends AbstractModule {
   @Override
   protected void configure() {
 
+    bind(MovieRatingsConfig)
+
     // handlers
     bind(JWTTokenHandler)
     bind(MovieIDExtractionAndVerificationHandler)
@@ -116,48 +118,41 @@ class MovieRatingsModule extends AbstractModule {
 
   @Provides
   @Singleton
-  MovieRatingsConfig provideAPIConfig(final ConfigData configData) {
-
-    configData.get(MovieRatingsConfig)
-  }
-
-  @Provides
-  @Singleton
   RedisReactiveCommands<String, User> userRedisCommands(
-    final MovieRatingsConfig config,
-    final KryoPool kryoPool) {
+    MovieRatingsConfig config,
+    KryoPool kryoPool) {
 
-    final RedisClient redisClient = RedisClient.create(config.redisURI)
+    RedisClient redisClient = RedisClient.create(config.redisURI)
     redisClient.connect(new KryoRedisCodec<User>(User, kryoPool)).reactive()
   }
 
   @Provides
   @Singleton
   RedisReactiveCommands<String, ComputedUserRating> computedRatingCommands(
-    final MovieRatingsConfig config,
-    final KryoPool kryoPool) {
+    MovieRatingsConfig config,
+    KryoPool kryoPool) {
 
-    final RedisClient redisClient = RedisClient.create(config.redisURI)
+    RedisClient redisClient = RedisClient.create(config.redisURI)
     redisClient.connect(new KryoRedisCodec<ComputedUserRating>(ComputedUserRating, kryoPool)).reactive()
   }
 
   @Provides
   @Singleton
   RedisReactiveCommands<String, ExternalRating> externalRatingCommands(
-    final MovieRatingsConfig config,
-    final KryoPool kryoPool) {
+    MovieRatingsConfig config,
+    KryoPool kryoPool) {
 
-    final RedisClient redisClient = RedisClient.create(config.redisURI)
+    RedisClient redisClient = RedisClient.create(config.redisURI)
     redisClient.connect(new KryoRedisCodec<ExternalRating>(ExternalRating, kryoPool)).reactive()
   }
 
   @Provides
   @Singleton
-  MongoDatabase provideMongoDatabase(final MovieRatingsConfig config) {
+  MongoDatabase provideMongoDatabase(MovieRatingsConfig config) {
 
-    final ConnectionString connectionString = new ConnectionString(config.mongoURI)
+    ConnectionString connectionString = new ConnectionString(config.mongoURI)
 
-    final CodecRegistry codecRegistry = CodecRegistries.fromRegistries(
+    CodecRegistry codecRegistry = CodecRegistries.fromRegistries(
       MongoClient.getDefaultCodecRegistry(),
       CodecRegistries.fromCodecs(new MovieCodec(), new RatingCodec(), new UserCodec()))
 
@@ -178,25 +173,25 @@ class MovieRatingsModule extends AbstractModule {
 
   @Provides
   @Singleton
-  public Service establishMongoIndexes(final MongoDatabase mongoDatabase,
-                                       final RedisReactiveCommands<String, ComputedUserRating> computedRatingCommands,
-                                       final RedisReactiveCommands<String, ExternalRating> externalRatingsCommands,
-                                       final RedisReactiveCommands<String, User> userRatingsCommand) {
+  public Service establishMongoIndexes(MongoDatabase mongoDatabase,
+                                       RedisReactiveCommands<String, ComputedUserRating> computedRatingCommands,
+                                       RedisReactiveCommands<String, ExternalRating> externalRatingsCommands,
+                                       RedisReactiveCommands<String, User> userRatingsCommand) {
 
     new Service() {
 
       @Override
       void onStart(StartEvent event) throws Exception {
 
-        final Observable<String> userIndexes = mongoDatabase.getCollection(UserCodec.COLLECTION_NAME)
+        Observable<String> userIndexes = mongoDatabase.getCollection(UserCodec.COLLECTION_NAME)
           .createIndexes([new IndexModel(new Document(UserCodec.USERNAME_PROPERTY, 1), new IndexOptions(unique: true))])
 
-        final Observable<String> movieIndexes = mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME)
+        Observable<String> movieIndexes = mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME)
           .createIndexes([
           new IndexModel(new Document('$**', 'text'), new IndexOptions(weights: new Document().append(MovieCodec.NAME_PROPERTY, 1))),
           new IndexModel(new Document(MovieCodec.IMDB_ID_PROPERTY, 1), new IndexOptions(unique: true))])
 
-        final Observable<String> ratingIndexes = mongoDatabase.getCollection(RatingCodec.COLLECTION_NAME)
+        Observable<String> ratingIndexes = mongoDatabase.getCollection(RatingCodec.COLLECTION_NAME)
           .createIndexes([new IndexModel(new Document(RatingCodec.MOVIE_ID_PROPERTY, 1).append(RatingCodec.USER_ID_PROPERTY, 1), new IndexOptions(unique: true))])
 
         Observable.zip(userIndexes, movieIndexes, ratingIndexes, { String userCollectionIndexNames,

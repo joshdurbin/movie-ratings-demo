@@ -1,7 +1,7 @@
+import io.durbs.movieratings.MovieRatingsConfig
 import io.durbs.movieratings.MovieRatingsModule
 import io.durbs.movieratings.handling.chainaction.AuthEndpoint
 import io.durbs.movieratings.handling.chainaction.MovieRestEndpoint
-import ratpack.config.ConfigData
 import ratpack.hystrix.HystrixModule
 import ratpack.rx.RxRatpack
 
@@ -9,15 +9,15 @@ import static ratpack.groovy.Groovy.ratpack
 
 ratpack {
 
+  serverConfig {
+    yaml('application.yaml')
+    sysProps('ratingsdemo.')
+    require("", MovieRatingsConfig)
+  }
+
   bindings {
 
     RxRatpack.initialize()
-
-    bindInstance(ConfigData, ConfigData.of { c ->
-      c.yaml("$serverConfig.baseDir.file/application.yaml")
-      c.env()
-      c.sysProps()
-    })
 
     module MovieRatingsModule
     module HystrixModule.newInstance()
