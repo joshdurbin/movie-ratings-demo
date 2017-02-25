@@ -19,25 +19,25 @@ class KryoRedisCodec<T> implements RedisCodec<String, T> {
 
   KryoPool kryoPool
 
-  final Class<T> type
+  Class<T> type
 
-  KryoRedisCodec(final Class<T> type, final KryoPool kryoPool) {
+  KryoRedisCodec(Class<T> type, KryoPool kryoPool) {
     this.type = type
     this.kryoPool = kryoPool
   }
 
   @Override
-  String decodeKey(final ByteBuffer bytes) {
+  String decodeKey(ByteBuffer bytes) {
 
     Charsets.UTF_8.decode(bytes).toString()
   }
 
   @Override
-  T decodeValue(final ByteBuffer byteBuffer) {
+  T decodeValue(ByteBuffer byteBuffer) {
 
     T value = null
 
-    final byte[] bytes = new byte[byteBuffer.remaining()]
+    byte[] bytes = new byte[byteBuffer.remaining()]
     byteBuffer.get(bytes)
 
     kryoPool.run(new KryoCallback<T>() {
@@ -50,15 +50,15 @@ class KryoRedisCodec<T> implements RedisCodec<String, T> {
   }
 
   @Override
-  ByteBuffer encodeKey(final String key) {
+  ByteBuffer encodeKey(String key) {
 
     Charsets.UTF_8.encode(key)
   }
 
   @Override
-  ByteBuffer encodeValue(final T object) {
+  ByteBuffer encodeValue(T object) {
 
-    final UnsafeOutput output = new UnsafeOutput(new ByteArrayOutputStream(), Constants.DEFAULT_KRYO_BUFFER)
+    UnsafeOutput output = new UnsafeOutput(new ByteArrayOutputStream(), Constants.DEFAULT_KRYO_BUFFER)
 
     Kryo kryo = null
 
@@ -67,7 +67,7 @@ class KryoRedisCodec<T> implements RedisCodec<String, T> {
       kryo = kryoPool.borrow()
       kryo.writeObject(output, object)
 
-    } catch (final Exception exception) {
+    } catch (Exception exception) {
 
       log.error("An error ocurred attempting to encode ${object}", exception)
 

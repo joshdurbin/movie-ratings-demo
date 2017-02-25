@@ -53,17 +53,17 @@ class RatingService {
   @Inject
   OMDBService omdbService
 
-  static String getComputedUserRatingCacheKey(final ObjectId movieId) {
+  static String getComputedUserRatingCacheKey(ObjectId movieId) {
 
     "${Constants.REDIS_COMPUTED_USER_RATING_PREFIX}-${movieId.toString()}"
   }
 
-  static String getExternalRatingCacheKey(final String imdbId) {
+  static String getExternalRatingCacheKey(String imdbId) {
 
     "${Constants.REDIS_EXTERNAL_RATING_PREFIX}-${imdbId}"
   }
 
-  Observable<ComputedUserRating> getComputedUserRating(final ObjectId movieId) {
+  Observable<ComputedUserRating> getComputedUserRating(ObjectId movieId) {
 
     computedRatingCache.get(getComputedUserRatingCacheKey(movieId))
       .bindExec()
@@ -74,17 +74,17 @@ class RatingService {
         match(eq(RatingCodec.MOVIE_ID_PROPERTY, movieId)),
         group('$movieId', Arrays.asList(avg('averageRating', '$rating'), sum('numberOfRatings', 1)))))
         .toObservable()
-        .map({ final Document document ->
+        .map({ Document document ->
 
-        final Double rating = document.getDouble('averageRating')
-        final Integer totalRatings = document.getInteger('numberOfRatings')
-        final Double scaledRating = new BigDecimal(rating).setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue()
+        Double rating = document.getDouble('averageRating')
+        Integer totalRatings = document.getInteger('numberOfRatings')
+        Double scaledRating = new BigDecimal(rating).setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue()
 
         log.debug("Computed a rating of ${scaledRating} out of ${totalRatings} ratings for the movie ID ${movieId.toString()}")
         new ComputedUserRating(rating: scaledRating, totalRatings: totalRatings)
       })
         .defaultIfEmpty(new ComputedUserRating(totalRatings: 0))
-        .doOnNext { final ComputedUserRating computedRating ->
+        .doOnNext { ComputedUserRating computedRating ->
 
         log.debug("Inserted computed rating in cache as key ${getComputedUserRatingCacheKey(movieId)}")
         computedRatingCache.set(getComputedUserRatingCacheKey(movieId),
@@ -94,13 +94,13 @@ class RatingService {
     )
   }
 
-  Observable<ExternalRating> getExternalRating(final String imdbId) {
+  Observable<ExternalRating> getExternalRating(String imdbId) {
 
     externalRatingCache.get(getExternalRatingCacheKey(imdbId))
       .bindExec()
       .switchIfEmpty (
       omdbService.getOMDBExternalRatingForMovie(imdbId)
-        .doOnNext { final ExternalRating externalRating ->
+        .doOnNext { ExternalRating externalRating ->
 
         log.info("Inserted external rating in cache as key ${getExternalRatingCacheKey(imdbId)}")
         externalRatingCache.set(getExternalRatingCacheKey(imdbId),
@@ -109,17 +109,17 @@ class RatingService {
       })
   }
 
-  Observable<ViewableRating> getIndividualUserRatingsAndComment(final ObjectId objectId) {
+  Observable<ViewableRating> getIndividualUserRatingsAndComment(ObjectId objectId) {
 
     mongoDatabase.getCollection(RatingCodec.COLLECTION_NAME, Rating)
       .find(eq(RatingCodec.MOVIE_ID_PROPERTY, objectId))
       .toObservable()
-      .flatMap({ final Rating rating ->
+      .flatMap({ Rating rating ->
 
       mongoDatabase.getCollection(UserCodec.COLLECTION_NAME, User)
         .find(eq(DBCollection.ID_FIELD_NAME, rating.userId))
         .toObservable()
-        .map({ final User user ->
+        .map({ User user ->
 
         new ViewableRating(username: user.username, usersGivenName: user.name, rating: rating.rating, comment: rating.comment)
       })
@@ -127,7 +127,7 @@ class RatingService {
     .bindExec()
   }
 
-  Observable<Rating> rateMovie(final Rating rating) {
+  Observable<Rating> rateMovie(Rating rating) {
 
     mongoDatabase.getCollection(RatingCodec.COLLECTION_NAME, Rating)
       .findOneAndUpdate(and(eq(RatingCodec.MOVIE_ID_PROPERTY, rating.movieId), eq(RatingCodec.USER_ID_PROPERTY, rating.userId)),
@@ -139,13 +139,13 @@ class RatingService {
       .switchIfEmpty(
       mongoDatabase.getCollection(RatingCodec.COLLECTION_NAME, Rating)
         .insertOne(rating)
-        .map { final Success success ->
+        .map { Success success ->
 
         rating
       }
     )
       .asObservable()
-      .doOnNext({ final Rating observedRating ->
+      .doOnNext({ Rating observedRating ->
 
       log.debug("Clearing computed rating cache with key ${getComputedUserRatingCacheKey(observedRating.movieId)}")
       computedRatingCache.del(getComputedUserRatingCacheKey(observedRating.movieId)).subscribe()
@@ -153,14 +153,14 @@ class RatingService {
       .bindExec()
   }
 
-  Observable<Long> deleteRatingsForMovieId(final ObjectId movieObjectId) {
+  Observable<Long> deleteRatingsForMovieId(ObjectId movieObjectId) {
 
-    final Observable<Long> deletedComputedRatingsFromCache = computedRatingCache.del(movieObjectId.toString())
-    final Observable<Long> deleteExternalRatingsFromCache = externalRatingCache.del(movieObjectId.toString())
+    Observable<Long> deletedComputedRatingsFromCache = computedRatingCache.del(movieObjectId.toString())
+    Observable<Long> deleteExternalRatingsFromCache = externalRatingCache.del(movieObjectId.toString())
 
     Observable.zip(deletedComputedRatingsFromCache, deleteExternalRatingsFromCache,
-      { final Long numberOfComputedRatingsDeletedFromCache,
-        final Long numberOfExternalRatingsDeletedFromCache ->
+      { Long numberOfComputedRatingsDeletedFromCache,
+        Long numberOfExternalRatingsDeletedFromCache ->
 
         numberOfComputedRatingsDeletedFromCache + numberOfExternalRatingsDeletedFromCache
       } as Func2)

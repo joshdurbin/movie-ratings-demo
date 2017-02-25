@@ -42,7 +42,7 @@ class AuthenticationService {
   @Inject
   MongoDatabase mongoDatabase
 
-  private final Func1 USER_TO_JWT = { final User user ->
+  private Func1 USER_TO_JWT = { User user ->
 
     Jwts
       .builder()
@@ -54,18 +54,18 @@ class AuthenticationService {
       .compact()
   } as Func1
 
-  static String getUserCacheKey(final String userId) {
+  static String getUserCacheKey(String userId) {
 
     "${Constants.REDIS_USER_KEY_PREFIX}-${userId}"
   }
 
-  Observable<String> createAccount(final User userToInsert) {
+  Observable<String> createAccount(User userToInsert) {
 
     userToInsert.setPassword(PasswordFactory.create().hash(userToInsert.password))
 
-    final Observable<User> userInsertionObservable = mongoDatabase.getCollection(UserCodec.COLLECTION_NAME, User)
+    Observable<User> userInsertionObservable = mongoDatabase.getCollection(UserCodec.COLLECTION_NAME, User)
       .insertOne(userToInsert)
-      .flatMap({ final Success success ->
+      .flatMap({ Success success ->
 
       mongoDatabase.getCollection(UserCodec.COLLECTION_NAME, User)
         .find(eq(UserCodec.USERNAME_PROPERTY, userToInsert.username))
@@ -80,15 +80,15 @@ class AuthenticationService {
       .bindExec()
   }
 
-  Observable<String> authenticate(final String username, final String password) {
+  Observable<String> authenticate(String username, String password) {
 
     mongoDatabase.getCollection(UserCodec.COLLECTION_NAME, User)
       .find(eq(UserCodec.USERNAME_PROPERTY, username))
       .toObservable()
-      .filter { final User user ->
+      .filter { User user ->
 
       PasswordFactory.create().verify(password, user.password)
-    }.doOnNext { final User user ->
+    }.doOnNext { User user ->
 
       if (PasswordFactory.create().needsRehash(user.password)) {
 
@@ -103,7 +103,7 @@ class AuthenticationService {
       .bindExec()
   }
 
-  Observable<User> validateToken(final String token) {
+  Observable<User> validateToken(String token) {
 
     Blocking.get {
 
@@ -114,14 +114,14 @@ class AuthenticationService {
         .body.get(Constants.JWT_USER_OBJECT_ID_CLAIM)
     }
     .observe()
-      .flatMap({ final String id ->
+      .flatMap({ String id ->
 
       userRedisCommands.get(getUserCacheKey(id))
         .switchIfEmpty(
         mongoDatabase.getCollection(UserCodec.COLLECTION_NAME, User)
           .find(eq(DBCollection.ID_FIELD_NAME, new ObjectId(id)))
           .toObservable()
-          .doOnNext { final User user ->
+          .doOnNext { User user ->
 
           userRedisCommands.set(getUserCacheKey(id), user, SetArgs.Builder.ex(movieRatingsConfig.userCacheTTLInSeconds)).subscribe()
         }

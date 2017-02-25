@@ -37,12 +37,12 @@ class MovieService {
   @Inject
   RatingService ratingService
 
-  private final Func1 MOVIE_TO_RATED_MOVIE = { final Movie movie ->
+  static private Func1 MOVIE_TO_RATED_MOVIE = { Movie movie ->
 
     Observable.zip(ratingService.getComputedUserRating(movie.id),
       ratingService.getExternalRating(movie.imdbId),
-      { final ComputedUserRating computedUserRating,
-        final ExternalRating externalRating ->
+      { ComputedUserRating computedUserRating,
+        ExternalRating externalRating ->
 
         movie.computedRating = computedUserRating
         movie.externalRating = externalRating
@@ -51,18 +51,18 @@ class MovieService {
       } as Func2)
   } as Func1
 
-  Observable<Boolean> movieExists(final ObjectId objectId) {
+  Observable<Boolean> movieExists(ObjectId objectId) {
 
     mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME)
       .find(eq(DBCollection.ID_FIELD_NAME, objectId))
       .projection(Projections.include(DBCollection.ID_FIELD_NAME))
       .toObservable()
       .isEmpty()
-      .map({ final Boolean movieDoesNotExist -> !movieDoesNotExist })
+      .map({ Boolean movieDoesNotExist -> !movieDoesNotExist })
       .bindExec()
   }
 
-  Observable<Movie> getMovie(final ObjectId objectId) {
+  Observable<Movie> getMovie(ObjectId objectId) {
 
     mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME, Movie)
       .find(eq(DBCollection.ID_FIELD_NAME, objectId))
@@ -78,13 +78,13 @@ class MovieService {
       .projection(Projections.include(MovieCodec.IMDB_ID_PROPERTY))
       .toObservable()
       .bindExec()
-      .map({ final Document document ->
+      .map({ Document document ->
 
         document.getString(MovieCodec.IMDB_ID_PROPERTY)
       })
   }
 
-  Observable<UpdateResult> updateMovie(final Movie movie) {
+  Observable<UpdateResult> updateMovie(Movie movie) {
 
     mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME, Movie)
       .updateOne(eq(DBCollection.ID_FIELD_NAME, movie.id),
@@ -97,7 +97,7 @@ class MovieService {
       .bindExec()
   }
 
-  Observable<String> createMovie(final Movie movie) {
+  Observable<String> createMovie(Movie movie) {
 
     mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME, Movie)
       .insertOne(movie)
@@ -108,18 +108,18 @@ class MovieService {
     .bindExec()
   }
 
-  Observable<Boolean> deleteMovieByID(final ObjectId movieObjectId) {
+  Observable<Boolean> deleteMovieByID(ObjectId movieObjectId) {
 
-    final Observable<Long> deleteRatingsFromCache = ratingService.deleteRatingsForMovieId(movieObjectId)
-    final Observable<DeleteResult> deleteMovie = mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME, Movie)
+    Observable<Long> deleteRatingsFromCache = ratingService.deleteRatingsForMovieId(movieObjectId)
+    Observable<DeleteResult> deleteMovie = mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME, Movie)
       .deleteOne(eq(DBCollection.ID_FIELD_NAME, movieObjectId))
-    final Observable<DeleteResult> deleteMovieRatings = mongoDatabase.getCollection(RatingCodec.COLLECTION_NAME, Rating)
+    Observable<DeleteResult> deleteMovieRatings = mongoDatabase.getCollection(RatingCodec.COLLECTION_NAME, Rating)
       .deleteMany(eq(RatingCodec.MOVIE_ID_PROPERTY, movieObjectId))
 
     Observable.zip(deleteRatingsFromCache, deleteMovie, deleteMovieRatings,
-      { final Long deletedRedisKeys,
-        final DeleteResult deletedMovieResult,
-        final DeleteResult deletedMovieRatingsResult ->
+      { Long deletedRedisKeys,
+        DeleteResult deletedMovieResult,
+        DeleteResult deletedMovieRatingsResult ->
 
         log.info("Removing movie id ${movieObjectId.toString()}, deleting ${deletedRedisKeys} redis keys, ${deletedMovieResult.deletedCount} movies, and ${deletedMovieRatingsResult.deletedCount} ratings...")
 
@@ -129,14 +129,14 @@ class MovieService {
       .bindExec()
   }
 
-  Observable<Long> getMovieCount(final Bson queryFilter) {
+  Observable<Long> getMovieCount(Bson queryFilter) {
 
     mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME)
       .count(queryFilter)
       .bindExec()
   }
 
-  Observable<Movie> getAllMovies(final Bson queryFilter, final Integer pageNumber, final Integer skipCount) {
+  Observable<Movie> getAllMovies(Bson queryFilter, Integer pageNumber, Integer skipCount) {
 
     mongoDatabase.getCollection(MovieCodec.COLLECTION_NAME, Movie)
       .find()

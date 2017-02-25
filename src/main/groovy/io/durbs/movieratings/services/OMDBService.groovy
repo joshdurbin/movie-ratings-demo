@@ -25,7 +25,7 @@ import static ratpack.rx.RxRatpack.observe
 @Slf4j
 class OMDBService {
 
-  static final ExternalRating NO_EXTERNAL_RATING = new ExternalRating(imdbRating: 0.0,
+  static ExternalRating NO_EXTERNAL_RATING = new ExternalRating(imdbRating: 0.0,
     totalImdbRatings: 0,
     rottenTomatoRating: 0.0,
     totalRottenTomatoRatings: 0,
@@ -33,14 +33,14 @@ class OMDBService {
     totalRottenTomatoUserRatings: 0,
     metascore: 0)
 
-  static final String OMDB_HYSTRIX_COMMAND_GROUND_KEY = 'omdb-service'
+  static String OMDB_HYSTRIX_COMMAND_GROUND_KEY = 'omdb-service'
 
   @Inject
   HttpClient httpClient
 
-  static final Splitter COMMA_SPLITTER = Splitter.on(Constants.OMDB_DEFAULT_DELIMITER).trimResults().omitEmptyStrings()
+  static Splitter COMMA_SPLITTER = Splitter.on(Constants.OMDB_DEFAULT_DELIMITER).trimResults().omitEmptyStrings()
 
-  Observable<Movie> getOMDBMovie(final String imdbId) {
+  Observable<Movie> getOMDBMovie(String imdbId) {
 
     new HystrixObservableCommand<Movie>(
       HystrixObservableCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(OMDB_HYSTRIX_COMMAND_GROUND_KEY))
@@ -49,17 +49,17 @@ class OMDBService {
       @Override
       protected Observable<Movie> construct() {
 
-        final String endpoint = "http://www.omdbapi.com/?i=${imdbId}&plot=full"
-        final URI endpointURI = endpoint.toURI()
+        String endpoint = "http://www.omdbapi.com/?i=${imdbId}&plot=full"
+        URI endpointURI = endpoint.toURI()
 
         log.trace("Opening a GET request to ${endpoint}...")
 
-        observe(httpClient.get(endpointURI)).map { final ReceivedResponse receivedResponse ->
+        observe(httpClient.get(endpointURI)).map { ReceivedResponse receivedResponse ->
 
-          final JsonSlurper slurper = new JsonSlurper()
+          JsonSlurper slurper = new JsonSlurper()
 
-          final Object parsedObject = slurper.parse(receivedResponse.body.inputStream)
-          final Map<String, String> parsedObjectMap = parsedObject as Map
+          Object parsedObject = slurper.parse(receivedResponse.body.inputStream)
+          Map<String, String> parsedObjectMap = parsedObject as Map
 
           new Movie(name: parsedObjectMap.get('Title'),
             imdbId: parsedObjectMap.get('imdbID'),
@@ -84,7 +84,7 @@ class OMDBService {
     .bindExec()
   }
 
-  Observable<ExternalRating> getOMDBExternalRatingForMovie(final String imdbId) {
+  Observable<ExternalRating> getOMDBExternalRatingForMovie(String imdbId) {
 
     new HystrixObservableCommand<ExternalRating>(
       HystrixObservableCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(OMDB_HYSTRIX_COMMAND_GROUND_KEY))
@@ -93,19 +93,19 @@ class OMDBService {
       @Override
       protected Observable<ExternalRating> construct() {
 
-        final String endpoint = "http://www.omdbapi.com/?i=${imdbId}&tomatoes=true"
-        final URI endpointURI = endpoint.toURI()
+        String endpoint = "http://www.omdbapi.com/?i=${imdbId}&tomatoes=true"
+        URI endpointURI = endpoint.toURI()
 
         log.trace("Opening a GET request to ${endpoint}...")
 
-        observe(httpClient.get(endpointURI)).map { final ReceivedResponse receivedResponse ->
+        observe(httpClient.get(endpointURI)).map { ReceivedResponse receivedResponse ->
 
-          final JsonSlurper slurper = new JsonSlurper()
+          JsonSlurper slurper = new JsonSlurper()
 
-          final Object parsedObject = slurper.parse(receivedResponse.body.inputStream)
-          final Map<String, String> parsedObjectMap = parsedObject as Map
+          Object parsedObject = slurper.parse(receivedResponse.body.inputStream)
+          Map<String, String> parsedObjectMap = parsedObject as Map
 
-          final Number totalImdbRatings = NumberFormat.getInstance(Locale.US).parse(parsedObjectMap.get('imdbVotes') as String)
+          Number totalImdbRatings = NumberFormat.getInstance(Locale.US).parse(parsedObjectMap.get('imdbVotes') as String)
 
           new ExternalRating(imdbRating: parsedObjectMap.get('imdbRating') as Double,
             totalImdbRatings: totalImdbRatings.intValue(),

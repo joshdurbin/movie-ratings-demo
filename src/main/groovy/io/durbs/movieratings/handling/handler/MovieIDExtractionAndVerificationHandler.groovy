@@ -21,16 +21,16 @@ class MovieIDExtractionAndVerificationHandler extends GroovyHandler {
   @Override
   protected void handle(GroovyContext context) {
 
-    final String movieId = context.pathTokens.get('id')
+    String movieId = context.pathTokens.get('id')
 
     if (ObjectId.isValid(movieId)) {
 
-      final ObjectId movieObjectId = new ObjectId(movieId)
+      ObjectId movieObjectId = new ObjectId(movieId)
 
       movieService
         .movieExists(movieObjectId)
         .single()
-        .subscribe({ final Boolean movieExists ->
+        .subscribe({ Boolean movieExists ->
 
         if (movieExists) {
 

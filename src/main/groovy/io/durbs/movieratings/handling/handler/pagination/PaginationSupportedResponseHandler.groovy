@@ -22,7 +22,7 @@ abstract class PaginationSupportedResponseHandler extends GroovyHandler {
 
   Integer getPageNumber() {
 
-    final Integer suppliedPageNumber
+    Integer suppliedPageNumber
 
     if (requestParameters.get(Constants.PAGE_NUMBER_QUERY_PARAM_KEY)?.isNumber()) {
       suppliedPageNumber = (requestParameters.get(Constants.PAGE_NUMBER_QUERY_PARAM_KEY) as Integer).abs()
@@ -35,7 +35,7 @@ abstract class PaginationSupportedResponseHandler extends GroovyHandler {
 
   Integer getPageSize() {
 
-    final Integer suppliedPageSize
+    Integer suppliedPageSize
 
     if (requestParameters.get(Constants.PAGE_SIZE_QUERY_PARAM_KEY)?.isNumber()) {
       suppliedPageSize = (requestParameters.get(Constants.PAGE_SIZE_QUERY_PARAM_KEY) as Integer).abs()
@@ -43,7 +43,7 @@ abstract class PaginationSupportedResponseHandler extends GroovyHandler {
       suppliedPageSize = movieRatingsConfig.defaultResultsPageSize
     }
 
-    final Integer limit
+    Integer limit
 
     if (suppliedPageSize > movieRatingsConfig.maxResultsPageSize || suppliedPageSize == NumberUtils.INTEGER_ZERO) {
       limit = movieRatingsConfig.maxResultsPageSize
@@ -59,10 +59,10 @@ abstract class PaginationSupportedResponseHandler extends GroovyHandler {
     List<Movie> movies
     String cursorURI
 
-    MovieListWithCursor(final List<Movie> movies,
-                        final Integer pageNumber,
-                        final Integer pageSize,
-                        final Integer totalMovieCount) {
+    MovieListWithCursor(List<Movie> movies,
+                        Integer pageNumber,
+                        Integer pageSize,
+                        Integer totalMovieCount) {
 
       this.movies = movies
       cursorURI = ''

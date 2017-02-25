@@ -20,27 +20,27 @@ import org.bson.types.ObjectId
 @Slf4j
 class MovieCodec implements CollectibleCodec<Movie> {
 
-  public static final String NAME_PROPERTY = 'name'
-  public static final String IMDB_ID_PROPERTY = 'imdbId'
-  public static final String DESCRIPTION_PROPERTY = 'description'
-  public static final String POSTER_IMAGE_URI_PROPERTY = 'posterImageURI'
-  public static final String YEAR_RELEASED_PROPERTY = 'yearReleased'
-  public static final String GENRE_PROPERTY = 'genre'
-  public static final String ACTORS_PROPERTY = 'actors'
-  public static final String DIRECTORS_PROPERTY = 'directors'
-  public static final String WRITERS_PROPERTY = 'writers'
-  public static final String LANGUAGES_PROPERTY = 'languages'
-  public static final String MPAA_RATING_PROPERTY = 'mpaaRating'
-  public static final String AWARDS_PROPERTY = 'awards'
+  public static String NAME_PROPERTY = 'name'
+  public static String IMDB_ID_PROPERTY = 'imdbId'
+  public static String DESCRIPTION_PROPERTY = 'description'
+  public static String POSTER_IMAGE_URI_PROPERTY = 'posterImageURI'
+  public static String YEAR_RELEASED_PROPERTY = 'yearReleased'
+  public static String GENRE_PROPERTY = 'genre'
+  public static String ACTORS_PROPERTY = 'actors'
+  public static String DIRECTORS_PROPERTY = 'directors'
+  public static String WRITERS_PROPERTY = 'writers'
+  public static String LANGUAGES_PROPERTY = 'languages'
+  public static String MPAA_RATING_PROPERTY = 'mpaaRating'
+  public static String AWARDS_PROPERTY = 'awards'
 
-  public static final String COLLECTION_NAME = 'movie'
+  public static String COLLECTION_NAME = 'movie'
 
-  static final Codec<Document> documentCodec = new DocumentCodec()
+  static Codec<Document> documentCodec = new DocumentCodec()
 
   @Override
-  Movie decode(final BsonReader reader, final DecoderContext decoderContext) {
+  Movie decode(BsonReader reader, DecoderContext decoderContext) {
 
-    final Document document = documentCodec.decode(reader, decoderContext)
+    Document document = documentCodec.decode(reader, decoderContext)
 
     new Movie(
       id: document.getObjectId(DBCollection.ID_FIELD_NAME),
@@ -59,9 +59,9 @@ class MovieCodec implements CollectibleCodec<Movie> {
   }
 
   @Override
-  void encode(final BsonWriter writer, final Movie movie, final EncoderContext encoderContext) {
+  void encode(BsonWriter writer, Movie movie, EncoderContext encoderContext) {
 
-    final Document document = new Document()
+    Document document = new Document()
 
     document.put(DBCollection.ID_FIELD_NAME, movie.id)
 
@@ -122,7 +122,7 @@ class MovieCodec implements CollectibleCodec<Movie> {
   }
 
   @Override
-  Movie generateIdIfAbsentFromDocument(final Movie movie) {
+  Movie generateIdIfAbsentFromDocument(Movie movie) {
 
     if (!documentHasId(movie)) {
       movie.setId(new ObjectId())
@@ -132,12 +132,12 @@ class MovieCodec implements CollectibleCodec<Movie> {
   }
 
   @Override
-  boolean documentHasId(final Movie movie) {
+  boolean documentHasId(Movie movie) {
     movie.id
   }
 
   @Override
-  BsonValue getDocumentId(final Movie movie) {
+  BsonValue getDocumentId(Movie movie) {
 
     if (!documentHasId(movie)) {
       throw new IllegalStateException("The movie does not contain an ${DBCollection.ID_FIELD_NAME}")

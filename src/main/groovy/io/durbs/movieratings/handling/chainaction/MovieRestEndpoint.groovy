@@ -45,7 +45,7 @@ class MovieRestEndpoint extends GroovyChainAction {
   void execute() throws Exception {
 
     onlyIf({
-      final Context context ->
+      Context context ->
         !context.getRequest().getMethod().isGet()
     }, JWTTokenHandler)
 
@@ -57,7 +57,7 @@ class MovieRestEndpoint extends GroovyChainAction {
         .getExistingMovieIMDBIDs()
         .toList()
         .defaultIfEmpty([])
-        .subscribe { final List<String> movieIMDBIds ->
+        .subscribe { List<String> movieIMDBIds ->
 
         render Jackson.json(movieIMDBIds)
       }
@@ -73,16 +73,16 @@ class MovieRestEndpoint extends GroovyChainAction {
 
         post {
 
-          final String imdbId = context.request.queryParams.get('imdbId')
+          String imdbId = context.request.queryParams.get('imdbId')
 
           omdbService
             .getOMDBMovie(imdbId)
-            .flatMap({ final Movie movie ->
+            .flatMap({ Movie movie ->
 
             movieService.createMovie(movie)
           } as Func1)
             .single()
-            .subscribe { final String movieID ->
+            .subscribe { String movieID ->
 
             redirect("/api/movies/${movieID}")
           }
@@ -94,7 +94,7 @@ class MovieRestEndpoint extends GroovyChainAction {
 
       all(MovieIDExtractionAndVerificationHandler)
 
-      path { final ObjectId movieId ->
+      path { ObjectId movieId ->
 
         byMethod {
 
@@ -103,7 +103,7 @@ class MovieRestEndpoint extends GroovyChainAction {
             movieService
               .getMovie(movieId)
               .single()
-              .subscribe { final Movie movie ->
+              .subscribe { Movie movie ->
 
               render Jackson.json(movie)
             }
@@ -114,7 +114,7 @@ class MovieRestEndpoint extends GroovyChainAction {
             movieService
               .deleteMovieByID(movieId)
               .single()
-              .subscribe { final Boolean success ->
+              .subscribe { Boolean success ->
 
               redirect('/api/movies')
             }
@@ -122,7 +122,7 @@ class MovieRestEndpoint extends GroovyChainAction {
         }
       }
 
-      path('ratings') { final ObjectId movieId ->
+      path('ratings') { ObjectId movieId ->
 
         byMethod {
 
@@ -131,7 +131,7 @@ class MovieRestEndpoint extends GroovyChainAction {
             ratingService
               .getIndividualUserRatingsAndComment(movieId)
               .toList()
-              .subscribe { final List<ViewableRating> ratings ->
+              .subscribe { List<ViewableRating> ratings ->
 
               render Jackson.json(ratings)
             }
@@ -141,9 +141,9 @@ class MovieRestEndpoint extends GroovyChainAction {
 
             context.parse(fromJson(Rating))
               .observe()
-              .flatMap({ final Rating rating ->
+              .flatMap({ Rating rating ->
 
-              final Set<ConstraintViolation<Rating>> violations = validator.validate(rating)
+              Set<ConstraintViolation<Rating>> violations = validator.validate(rating)
               if (!violations.empty) {
                 throw new IllegalArgumentException("There are a number of constraint violations on rating submission... ${violations}")
               }
@@ -153,7 +153,7 @@ class MovieRestEndpoint extends GroovyChainAction {
 
               ratingService.rateMovie(rating)
             } as Func1)
-              .subscribe { final Rating rating ->
+              .subscribe { Rating rating ->
 
               redirect("/api/movies/${rating.movieId.toString()}")
             }

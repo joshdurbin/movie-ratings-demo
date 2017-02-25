@@ -20,19 +20,19 @@ import org.bson.types.ObjectId
 @Slf4j
 class RatingCodec implements CollectibleCodec<Rating> {
 
-  public static final String USER_ID_PROPERTY = 'userId'
-  public static final String MOVIE_ID_PROPERTY = 'movieId'
-  public static final String RATING_PROPERTY = 'rating'
-  public static final String COMMENT_PROPERTY = 'comment'
+  public static String USER_ID_PROPERTY = 'userId'
+  public static String MOVIE_ID_PROPERTY = 'movieId'
+  public static String RATING_PROPERTY = 'rating'
+  public static String COMMENT_PROPERTY = 'comment'
 
-  public static final String COLLECTION_NAME = 'rating'
+  public static String COLLECTION_NAME = 'rating'
 
-  static final Codec<Document> documentCodec = new DocumentCodec()
+  static Codec<Document> documentCodec = new DocumentCodec()
 
   @Override
-  Rating decode(final BsonReader reader, final DecoderContext decoderContext) {
+  Rating decode(BsonReader reader, DecoderContext decoderContext) {
 
-    final Document document = documentCodec.decode(reader, decoderContext)
+    Document document = documentCodec.decode(reader, decoderContext)
 
     new Rating(
       id: document.getObjectId(DBCollection.ID_FIELD_NAME),
@@ -43,9 +43,9 @@ class RatingCodec implements CollectibleCodec<Rating> {
   }
 
   @Override
-  void encode(final BsonWriter writer, final Rating rating, final EncoderContext encoderContext) {
+  void encode(BsonWriter writer, Rating rating, EncoderContext encoderContext) {
 
-    final Document document = new Document()
+    Document document = new Document()
 
     document.put(DBCollection.ID_FIELD_NAME, rating.id)
     document.put(USER_ID_PROPERTY, rating.userId)
@@ -62,7 +62,7 @@ class RatingCodec implements CollectibleCodec<Rating> {
   }
 
   @Override
-  Rating generateIdIfAbsentFromDocument(final Rating rating) {
+  Rating generateIdIfAbsentFromDocument(Rating rating) {
 
     if (!documentHasId(rating)) {
       rating.setId(new ObjectId())
@@ -72,12 +72,12 @@ class RatingCodec implements CollectibleCodec<Rating> {
   }
 
   @Override
-  boolean documentHasId(final Rating rating) {
+  boolean documentHasId(Rating rating) {
     rating.id
   }
 
   @Override
-  BsonValue getDocumentId(final Rating rating) {
+  BsonValue getDocumentId(Rating rating) {
 
     if (!documentHasId(rating)) {
       throw new IllegalStateException("The rating does not contain an ${DBCollection.ID_FIELD_NAME}")

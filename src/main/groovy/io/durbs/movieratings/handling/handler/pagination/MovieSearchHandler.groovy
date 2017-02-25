@@ -33,14 +33,14 @@ class MovieSearchHandler extends PaginationSupportedResponseHandler {
 
     params = context.request.queryParams
 
-    final String queryTerm = context.request.queryParams.get('q', Constants.EMPTY_STRING)
+    String queryTerm = context.request.queryParams.get('q', Constants.EMPTY_STRING)
 
-    final Observable<List<Movie>> moviesObservable = movieService
+    Observable<List<Movie>> moviesObservable = movieService
       .getAllMovies(text(queryTerm), pageNumber, pageNumber * pageSize)
       .toList()
       .defaultIfEmpty([])
 
-    final Observable<Long> movieCountObservable = movieService
+    Observable<Long> movieCountObservable = movieService
       .getMovieCount(text(queryTerm))
       .defaultIfEmpty(0L)
 
@@ -50,7 +50,7 @@ class MovieSearchHandler extends PaginationSupportedResponseHandler {
 
       movies
     } as Func2)
-      .subscribe { final List<Movie> movies ->
+      .subscribe { List<Movie> movies ->
 
       context.render Jackson.json(movies)
     }

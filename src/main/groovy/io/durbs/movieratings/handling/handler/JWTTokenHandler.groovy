@@ -27,15 +27,15 @@ class JWTTokenHandler extends GroovyHandler {
     if (context.request.headers.contains(HttpHeaders.AUTHORIZATION)
       && context.request.headers.get(HttpHeaders.AUTHORIZATION)?.startsWith(Constants.BEARER_AUTHORIZATION_SCHEMA_KEY)) {
 
-      final String token = context.request.headers.get(HttpHeaders.AUTHORIZATION) - Constants.BEARER_AUTHORIZATION_PREFIX
+      String token = context.request.headers.get(HttpHeaders.AUTHORIZATION) - Constants.BEARER_AUTHORIZATION_PREFIX
 
       authenticationService.validateToken(token)
-        .doOnError { final Throwable throwable ->
+        .doOnError { Throwable throwable ->
 
         log.error('An error occurred attempting to validate the JWT token', throwable)
         context.clientError(HttpResponseStatus.UNAUTHORIZED.code())
 
-      }.subscribe { final User user ->
+      }.subscribe { User user ->
 
         context.next(Registry.single(user))
       }

@@ -32,12 +32,12 @@ class GetAllMoviesHandler extends PaginationSupportedResponseHandler {
 
     params = context.request.queryParams
 
-    final Observable<List<Movie>> moviesObservable = movieService
+    Observable<List<Movie>> moviesObservable = movieService
       .getAllMovies(Constants.EMPTY_DOCUMENT, pageNumber, pageSize)
       .toList()
       .defaultIfEmpty([])
 
-    final Observable<Long> movieCountObservable = movieService
+    Observable<Long> movieCountObservable = movieService
       .getMovieCount(Constants.EMPTY_DOCUMENT)
       .defaultIfEmpty(0L)
 
@@ -45,7 +45,7 @@ class GetAllMoviesHandler extends PaginationSupportedResponseHandler {
 
       new MovieListWithCursor(movies, pageNumber, pageSize, movieCount as Integer)
     } as Func2)
-      .subscribe { final MovieListWithCursor movieListWithCursor ->
+      .subscribe { MovieListWithCursor movieListWithCursor ->
 
       context.response.headers.add(HttpHeaders.LINK, movieListWithCursor.cursorURI)
       context.render Jackson.json(movieListWithCursor.movies)

@@ -20,19 +20,19 @@ import org.bson.types.ObjectId
 @Slf4j
 class UserCodec implements CollectibleCodec<User> {
 
-  public static final String USERNAME_PROPERTY = 'username'
-  public static final String NAME_PROPERTY = 'name'
-  public static final String PASSWORD_PROPERTY = 'password'
-  public static final String EMAIL_ADDRESS_PROPERTY = 'emailAddress'
+  public static String USERNAME_PROPERTY = 'username'
+  public static String NAME_PROPERTY = 'name'
+  public static String PASSWORD_PROPERTY = 'password'
+  public static String EMAIL_ADDRESS_PROPERTY = 'emailAddress'
 
-  public static final String COLLECTION_NAME = 'user'
+  public static String COLLECTION_NAME = 'user'
 
-  static final Codec<Document> documentCodec = new DocumentCodec()
+  static Codec<Document> documentCodec = new DocumentCodec()
 
   @Override
-  User decode(final BsonReader reader, final DecoderContext decoderContext) {
+  User decode(BsonReader reader, DecoderContext decoderContext) {
 
-    final Document document = documentCodec.decode(reader, decoderContext)
+    Document document = documentCodec.decode(reader, decoderContext)
 
     new User(
       id: document.getObjectId(DBCollection.ID_FIELD_NAME),
@@ -43,9 +43,9 @@ class UserCodec implements CollectibleCodec<User> {
   }
 
   @Override
-  void encode(final BsonWriter writer, final User user, final EncoderContext encoderContext) {
+  void encode(BsonWriter writer, User user, EncoderContext encoderContext) {
 
-    final Document document = new Document()
+    Document document = new Document()
 
     if (user.id) {
       document.put(DBCollection.ID_FIELD_NAME, user.id)
@@ -76,7 +76,7 @@ class UserCodec implements CollectibleCodec<User> {
   }
 
   @Override
-  User generateIdIfAbsentFromDocument(final User user) {
+  User generateIdIfAbsentFromDocument(User user) {
 
     if (!documentHasId(user)) {
       user.setId(new ObjectId())
@@ -86,12 +86,12 @@ class UserCodec implements CollectibleCodec<User> {
   }
 
   @Override
-  boolean documentHasId(final User user) {
+  boolean documentHasId(User user) {
     user.id
   }
 
   @Override
-  BsonValue getDocumentId(final User user) {
+  BsonValue getDocumentId(User user) {
 
     if (!documentHasId(user)) {
       throw new IllegalStateException("The user does not contain an ${DBCollection.ID_FIELD_NAME}")
