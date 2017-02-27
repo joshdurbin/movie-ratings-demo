@@ -3,11 +3,14 @@ buildscript {
     jcenter()
   }
   dependencies {
-    classpath "io.ratpack:ratpack-gradle:1.4.5"
-    classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
+    classpath 'com.bmuschko:gradle-docker-plugin:3.0.5'
+    classpath 'io.ratpack:ratpack-gradle:1.4.5'
+    classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
   }
 }
 
+apply plugin: 'com.bmuschko.docker-remote-api'
+apply plugin: 'com.bmuschko.docker-java-application'
 apply plugin: "io.ratpack.ratpack-groovy"
 apply plugin: "com.github.johnrengelman.shadow"
 apply plugin: "idea"
@@ -43,4 +46,9 @@ dependencies {
   testCompile "org.spockframework:spock-core:1.0-groovy-2.4"
 }
 
-task stage(dependsOn: ['clean', 'installApp'])
+docker {
+  javaApplication {
+    maintainer = 'Joshua Durbin "durbinjo593@gmail.com"'
+    port = 5050
+  }
+}

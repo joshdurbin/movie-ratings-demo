@@ -2,8 +2,8 @@ version: '2'
 
 services:
 
-  movieapi:
-    image: v0.0.8
+  api:
+    image: movie-api
     ports:
       - 8080
     networks:
@@ -12,14 +12,14 @@ services:
   redis:
     image: redis
     links:
-      - movieapi
+      - api
     networks:
       - backend
 
   mongo:
     image: mongo
     links:
-      - movieapi
+      - api
     networks:
       - backend
 
@@ -28,7 +28,7 @@ services:
     ports:
       - 1999:80
     links:
-      - movieapi
+      - api
     networks:
       - backend
     volumes:
